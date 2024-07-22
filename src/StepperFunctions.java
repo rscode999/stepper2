@@ -132,16 +132,16 @@ public class StepperFunctions {
     //GETTERS
 
     /**
-     * Returns index `index` of KEY_BLOCK_INCREMENTS. If `index` is not a valid index, throws an IllegalArgumentException.<br><br>
+     * Returns index `index` of KEY_BLOCK_INCREMENTS. If `index` is not a valid index, throws an ArrayIndexOBException.<br><br>
      *
      * Needed to prevent other methods from modifying a constant array.
      * @param index index of KEY_BLOCK_INCREMENTS to access
      * @return value at given index
-     * @throws IllegalArgumentException if `index` is not valid
+     * @throws ArrayIndexOutOfBoundsException if `index` is not valid
      */
-    public static byte keyBlockIncrementIndex(int index) {
+    public static byte getKeyBlockIncrementIndex(int index) {
         if(index<0 || index>=KEY_BLOCK_INCREMENTS.length) {
-            throw new IllegalArgumentException("Index must be on the interval [0," + (KEY_BLOCK_INCREMENTS.length-1) + "]");
+            throw new ArrayIndexOutOfBoundsException("Index must be on the interval [0," + (KEY_BLOCK_INCREMENTS.length-1) + "]");
         }
 
         return KEY_BLOCK_INCREMENTS[index];
@@ -200,6 +200,9 @@ public class StepperFunctions {
 
         //If the output is not filled, load with random characters
         while(formattedKey.length() < blocks*charsPerBlock) {
+            for(int r=0; r<rng.nextInt(); r++) {
+                rng.nextInt();
+            }
             int currentRandChar = rng.nextInt();
 
             //Convert the next random number to a non-negative number
@@ -231,19 +234,16 @@ public class StepperFunctions {
 
 
     /**
-     * Returns the decrypted version of text using the given key beginning at index `startIndex`.<br><br>
-     *
-     * The result should be as if the entire text was decrypted, then only the substring starting at `startIndex` is
-     * included in the final result.<br><br>
+     * Returns the decrypted version of text using the given key beginning after `startBlock` blocks have been decrypted.<br><br>
      *
      * Algorithm first implemented on February 26-29, 2024. Enhanced encryption finished on July 18, 2024. By Chris P Bacon
      *
      * @param text text to decrypt. Must contain all lowercase English ASCII characters. Can't be null
      * @param key key to decrypt with. Can't be null. All indices must be on [0,25]
-     * @param startIndex index to start decrypting from. Must be non-negative
+     * @param startBlock index to start decrypting from. Must be non-negative
      * @return decrypted version of text
      */
-    public static String decrypt(String text, byte[][] key, int startIndex) {
+    public static String decrypt(String text, byte[][] key, int startBlock) {
         //Enforce preconditions
 
         //Check that both inputs are not null
@@ -273,7 +273,7 @@ public class StepperFunctions {
         }
 
         //Check start index is non-negative
-        if(startIndex < 0) {
+        if(startBlock < 0) {
             throw new AssertionError("Starting index must be non-negative");
         }
 
@@ -281,23 +281,23 @@ public class StepperFunctions {
         //////////////////////////
 
         //Configure block positions
-        byte[] keyBlockPositions=initializeKeyBlockPositions(startIndex + text.length());
+        byte[] keyBlockBasePositions=initializeKeyBlockPositions(startBlock);
 //        System.out.println(text);
         String output="";
 
         int currentChar=0;
-        int currentBlock = (startIndex + text.length()) / BLOCK_LENGTH;
+        int currentBlock = startBlock; //(startIndex + text.length()) / BLOCK_LENGTH;
 
-        byte[] currentKeyBlockPositions=new byte[BLOCK_COUNT];
-        for(int s=0; s<currentKeyBlockPositions.length; s++) {
-            currentKeyBlockPositions[s]=keyBlockPositions[s];
+        byte[] keyBlockReadPositions=new byte[BLOCK_COUNT];
+        for(int s=0; s<keyBlockReadPositions.length; s++) {
+            keyBlockReadPositions[s]=keyBlockBasePositions[s];
         }
 
         for(int m=0; m<(text.length() % BLOCK_LENGTH); m++) {
-            for(int a=0; a<currentKeyBlockPositions.length; a++) {
-                currentKeyBlockPositions[a]++;
-                if(currentKeyBlockPositions[a] >= BLOCK_LENGTH) {
-                    currentKeyBlockPositions[a]=0;
+            for(int a=0; a<keyBlockReadPositions.length; a++) {
+                keyBlockReadPositions[a]++;
+                if(keyBlockReadPositions[a] >= BLOCK_LENGTH) {
+                    keyBlockReadPositions[a]=0;
                 }
             }
         }
@@ -305,16 +305,16 @@ public class StepperFunctions {
         for(int t=text.length()-1; t>=text.length()-(text.length() % BLOCK_LENGTH); t--) {
 
 
-            for(int d=0; d<currentKeyBlockPositions.length; d++) {
-                currentKeyBlockPositions[d] -= 1;
-                if(currentKeyBlockPositions[d] < 0) {
-                    currentKeyBlockPositions[d] = BLOCK_LENGTH-1;
+            for(int d=0; d<keyBlockReadPositions.length; d++) {
+                keyBlockReadPositions[d] -= 1;
+                if(keyBlockReadPositions[d] < 0) {
+                    keyBlockReadPositions[d] = BLOCK_LENGTH-1;
                 }
             }
 
             currentChar=text.charAt(t) - 97;
-            for(int k=currentKeyBlockPositions.length-1; k>=0; k--) {
-                currentChar = (currentChar - key[k][currentKeyBlockPositions[k]]) % 26;
+            for(int k=keyBlockReadPositions.length-1; k>=0; k--) {
+                currentChar = (currentChar - key[k][keyBlockReadPositions[k]]) % 26;
                 if(currentChar < 0) {
                     currentChar += 26;
                 }
@@ -330,39 +330,39 @@ public class StepperFunctions {
 
             currentBlock--;
             if((currentBlock+1)%BLOCK_LENGTH==0) {
-                keyBlockPositions = setKeyBlockPositions(currentBlock);
+                keyBlockBasePositions = setKeyBlockPositions(currentBlock);
 //                System.out.println("PERIOD END DETECTED");
             }
 
 
-            for(int m=0; m<keyBlockPositions.length; m++) {
-                keyBlockPositions[m] -= KEY_BLOCK_INCREMENTS[m];
+            for(int m=0; m<keyBlockBasePositions.length; m++) {
+                keyBlockBasePositions[m] -= KEY_BLOCK_INCREMENTS[m];
 
-                if(keyBlockPositions[m]<0) {
-                    keyBlockPositions[m] += BLOCK_LENGTH;
+                if(keyBlockBasePositions[m]<0) {
+                    keyBlockBasePositions[m] += BLOCK_LENGTH;
                 }
             }
 
 //            System.out.println(Arrays.toString(keyBlockPositions));
 
-            for(int s=0; s<currentKeyBlockPositions.length; s++) {
-                currentKeyBlockPositions[s]=keyBlockPositions[s];
+            for(int s=0; s<keyBlockReadPositions.length; s++) {
+                keyBlockReadPositions[s]=keyBlockBasePositions[s];
             }
 
             for(int t=b; t>b-BLOCK_LENGTH; t--) {
 
-                for(int d=0; d<currentKeyBlockPositions.length; d++) {
-                    currentKeyBlockPositions[d]--;
-                    if(currentKeyBlockPositions[d] < 0) {
-                        currentKeyBlockPositions[d]=BLOCK_LENGTH-1;
+                for(int d=0; d<keyBlockReadPositions.length; d++) {
+                    keyBlockReadPositions[d]--;
+                    if(keyBlockReadPositions[d] < 0) {
+                        keyBlockReadPositions[d]=BLOCK_LENGTH-1;
                     }
                 }
 
                 currentChar=(int)text.charAt(t) - 97;
 
-                for(int k=currentKeyBlockPositions.length-1; k>=0; k--) {
+                for(int k=keyBlockReadPositions.length-1; k>=0; k--) {
 
-                    currentChar = (currentChar - key[k][currentKeyBlockPositions[k]]) % 26;
+                    currentChar = (currentChar - key[k][keyBlockReadPositions[k]]) % 26;
                     if(currentChar < 0) {
                         currentChar += 26;
                     }
@@ -445,20 +445,19 @@ public class StepperFunctions {
 
 
     /**
-     * Returns the encrypted version of text, using inputKey as the key. Encryption starts at index `startIndex`. <br><br>
+     * Returns the encrypted version of text, using inputKey as the key. Encryption starts after `startBlocks` blocks. <br><br>
      *
-     * The result should be as if the entire text was encrypted, then only the substring starting at `startIndex` is
-     * included in the final result.<br>
-     * Throws IllegalArgumentException if any preconditions are broken<br><br>
+     * The result should be as if the entire text was encrypted, then only the substring starting after `startBlocks` is
+     * in the final result.<br><br>
      *
      * Algorithm first implemented on February 26-29, 2024. Enhanced encryption finished on July 18, 2024. By Chris P Bacon
      *
      * @param text text to encrypt. Must contain all lowercase English ASCII characters. Can't be null
      * @param key key to encrypt with. Can't be null. All indices must be on [0,25]
-     * @param startIndex index to start encrypting from. Must be non-negative
+     * @param startBlocks index to start encrypting from. Must be non-negative
      * @return encrypted version of text
      */
-    public static String encrypt(String text, byte[][] key, int startIndex) {
+    public static String encrypt(String text, byte[][] key, int startBlocks) {
         //Enforce preconditions
 
         //Check that both inputs are not null
@@ -488,7 +487,7 @@ public class StepperFunctions {
         }
 
         //Check start index is non-negative
-        if(startIndex < 0) {
+        if(startBlocks < 0) {
             throw new AssertionError("Starting index must be non-negative");
         }
 
@@ -496,17 +495,17 @@ public class StepperFunctions {
         //////////////////////////
         //Start the process
 
-        byte[] keyBlockBasePositions = initializeKeyBlockPositions(startIndex);
+        byte[] keyBlockBasePositions = initializeKeyBlockPositions(startBlocks);
         byte[] keyBlockReadPositions = new byte[BLOCK_COUNT];
         for(int s=0; s<keyBlockReadPositions.length; s++) {
             keyBlockReadPositions[s] = keyBlockBasePositions[s];
         }
 
-//        System.out.println(Arrays.toString(keyBlockBasePositions));
+        System.out.println(Arrays.toString(keyBlockBasePositions) + " " + text);
 
         String output="";
         int currentChar=0;
-        int blocksEncrypted = 0;
+        int blocksEncrypted = startBlocks;
 
         for(int b=0; b<=text.length()-BLOCK_LENGTH; b+=BLOCK_LENGTH) {
 
@@ -535,12 +534,11 @@ public class StepperFunctions {
 //            System.out.println(Arrays.toString(keyBlockBasePositions));
 
             for(int r=0; r<keyBlockBasePositions.length; r++) {
-                keyBlockBasePositions[r] = (byte) ((keyBlockBasePositions[r] + keyBlockIncrementIndex(r)) % BLOCK_LENGTH);
+                keyBlockBasePositions[r] = (byte) ((keyBlockBasePositions[r] + getKeyBlockIncrementIndex(r)) % BLOCK_LENGTH);
             }
 
             if((blocksEncrypted+1) % BLOCK_LENGTH == 0) {
                 keyBlockBasePositions = setKeyBlockPositions(blocksEncrypted+2);
-//                System.out.println("PERIOD END DETECTED");
             }
 
             blocksEncrypted++;
@@ -730,6 +728,7 @@ public class StepperFunctions {
     }
 
 
+    /*
     /**
      * Returns an array of bytes representing the key block positions at the end of encryption,
      * if the input was `textLen` chars long<br><br>
@@ -739,8 +738,7 @@ public class StepperFunctions {
      *
      * @param textLen length of input text, non-negative
      * @return key block positions at the end of encryption
-     */
-    private static byte[] initializeKeyBlockPositions(int textLen) {
+    private static byte[] initializeKeyBlockPositions_Old(int textLen) {
         assert textLen>=0;
 
         byte[] output = new byte[BLOCK_COUNT];
@@ -755,7 +753,39 @@ public class StepperFunctions {
         for(int b=0; b<textBlocks; b++) {
             //Increment each index of the output
             for(int i=0; i<output.length; i++) {
-                output[i] = (byte) ((output[i] + keyBlockIncrementIndex(i)) % BLOCK_LENGTH);
+                output[i] = (byte) ((output[i] + getKeyBlockIncrementIndex(i)) % BLOCK_LENGTH);
+            }
+
+            //Step the key blocks if a period ends (passes BLOCK_LENGTH blocks)
+            if((b+1) % BLOCK_LENGTH == 0) {
+                output = setKeyBlockPositions(b+2);
+            }
+        }
+
+        return output;
+    }
+    */
+
+    /**
+     * Returns an array of bytes representing the key block positions at the end of encryption,
+     * if the input was `blocks` blocks long<br><br>
+     *
+     * `blocks` should equal the number of blocks before the starting position.<br>
+     * Example: if `blocks` equals 4, the output would be the block positions just after encrypting 4 blocks.
+     *
+     * @param blocks number of blocks encrypted so far, non-negative
+     * @return key block positions at the end of encryption
+     */
+    private static byte[] initializeKeyBlockPositions(int blocks) {
+        assert blocks>=0;
+
+        byte[] output = new byte[BLOCK_COUNT];
+
+        //Simulate moving through each block of text
+        for(int b=0; b<blocks; b++) {
+            //Increment each index of the output
+            for(int i=0; i<output.length; i++) {
+                output[i] = (byte) ((output[i] + getKeyBlockIncrementIndex(i)) % BLOCK_LENGTH);
             }
 
             //Step the key blocks if a period ends (passes BLOCK_LENGTH blocks)
@@ -767,14 +797,16 @@ public class StepperFunctions {
         return output;
     }
 
+    /*
     /**
      * Returns the output of initializeKeyBlockPositions. Should be used only in testing.
      * @param textLen length of text to test
      * @return output of initializeKeyBlockPositions
-     */
     public static byte[] initializeKeyBlockPositions_Testing(int textLen) {
-        return initializeKeyBlockPositions(textLen);
+        return initializeKeyBlockPositions_Old(textLen);
     }
+    */
+
 
 
     /**
@@ -1173,7 +1205,8 @@ public class StepperFunctions {
         After loading the final 2 blocks: {[1,4,7], [2,5,8], [3,6]}
         This arrangement succeeds in evenly splitting the blocks among the output indices.
          */
-        if(blocksLength<=0 || blockCount<=0) throw new AssertionError("Block length and block count must be positive");
+        if(blocksLength<=0) throw new AssertionError("Block length must be positive");
+        if(blockCount<=0) throw new AssertionError("Block count must be positive");
 
         int cutoff=1;
 
@@ -1304,6 +1337,9 @@ public class StepperFunctions {
 
         //Create String array to hold the blocks
         String[] blocks = new String[(int) Math.ceil(text.length() / (float)minBlockSize)];
+        if(blocks.length==0) {
+            return new String[] {""};
+        }
 
         //Load each String with blockSize characters until the end is reached
         for (int i = 0; i < text.length(); i += minBlockSize) {

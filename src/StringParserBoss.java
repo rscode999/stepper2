@@ -167,22 +167,22 @@ public class StringParserBoss extends SwingWorker<String,String> {
         //Split the text into even blocks
         textPieces = StepperFunctions.setWorkerLoads(text, fields.threadCount(), StepperFunctions.BLOCK_LENGTH);
 //        for (String s : textPieces) {
-//            System.out.println("\"" + s + "\"");
+//            System.out.println("\"" + s + "\" " + s.length());
 //        }
 
         //Make the worker threads: one index for each piece of the text
         workerThreads = new StringParserWorker[textPieces.length];
-        int startingIndex = 0;
+        int startingBlock = 0;
         for (int i = 0; i < workerThreads.length; i++) {
-            //Must add 1 to the starting index. Bug fix.
-            workerThreads[i] = new StringParserWorker(textPieces[i], key, encrypting, Integer.toString(i), startingIndex+1);
+            workerThreads[i] = new StringParserWorker(textPieces[i], key, encrypting, Integer.toString(i), startingBlock);
 
-            startingIndex += textPieces[i].length();
+            startingBlock += (textPieces[i].length() / StepperFunctions.BLOCK_LENGTH);
+            System.out.println(textPieces[i].length());
         }
 
-//        for(SwingWorker w : workerThreads) {
-//            System.out.println((StringParserWorker)w);
-//        }
+        for(SwingWorker w : workerThreads) {
+            System.out.println((StringParserWorker)w);
+        }
 
 
         //Start each worker thread
@@ -245,6 +245,5 @@ public class StringParserBoss extends SwingWorker<String,String> {
         //Screen changing occurs in the StringParserDispatcher that created this Boss
         return output;
     }
-
 
 }

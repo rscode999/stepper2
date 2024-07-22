@@ -1129,6 +1129,10 @@ public class StepperApp extends JFrame {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             StepperApp app = new StepperApp();
+
+            System.out.println(StepperFunctions.encrypt("helloworldhelloworldhelloworldhelloworldhelloworldhelloworldhelloworldhelloworldhelloworldhelloworldhelloworldhelloworld".substring(58),
+                    StepperFunctions.createKeyBlocks("obxclfwysufjjsvngxcfosryxrvamjxfcytprybcgaavwpfouausdqtuekucikyofzcoxkegvfebesalybnyhtshekhfvzxgtryjhitsennhyhwxsubywdteohndtkiyuotoe",StepperFunctions.BLOCK_COUNT,StepperFunctions.BLOCK_LENGTH),
+                    38));
         });
     }
 }
