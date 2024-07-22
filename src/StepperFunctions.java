@@ -274,19 +274,19 @@ public class StepperFunctions {
 
         //Check start index is non-negative
         if(startBlock < 0) {
-            throw new AssertionError("Starting index must be non-negative");
+            throw new AssertionError("Starting block number must be non-negative");
         }
 
 
         //////////////////////////
 
         //Configure block positions
-        byte[] keyBlockBasePositions=initializeKeyBlockPositions(startBlock);
+        byte[] keyBlockBasePositions=initializeKeyBlockPositions(startBlock + text.length()/BLOCK_LENGTH);
 //        System.out.println(text);
         String output="";
 
         int currentChar=0;
-        int currentBlock = startBlock; //(startIndex + text.length()) / BLOCK_LENGTH;
+        int currentBlock = (startBlock + text.length()/BLOCK_LENGTH);
 
         byte[] keyBlockReadPositions=new byte[BLOCK_COUNT];
         for(int s=0; s<keyBlockReadPositions.length; s++) {
@@ -488,7 +488,7 @@ public class StepperFunctions {
 
         //Check start index is non-negative
         if(startBlocks < 0) {
-            throw new AssertionError("Starting index must be non-negative");
+            throw new AssertionError("Starting block number must be non-negative");
         }
 
 
@@ -728,44 +728,6 @@ public class StepperFunctions {
     }
 
 
-    /*
-    /**
-     * Returns an array of bytes representing the key block positions at the end of encryption,
-     * if the input was `textLen` chars long<br><br>
-     *
-     * The value at index 0 represents the position of the topmost key block.<br>
-     * Position BLOCK_COUNT-1 represents the position of the bottommost key block.
-     *
-     * @param textLen length of input text, non-negative
-     * @return key block positions at the end of encryption
-    private static byte[] initializeKeyBlockPositions_Old(int textLen) {
-        assert textLen>=0;
-
-        byte[] output = new byte[BLOCK_COUNT];
-
-        //Calculate number of text blocks
-        int textBlocks = textLen / BLOCK_LENGTH;
-        if(textLen % BLOCK_LENGTH == 0) {
-            textBlocks -= 1;
-        }
-
-        //Simulate moving through each block of text
-        for(int b=0; b<textBlocks; b++) {
-            //Increment each index of the output
-            for(int i=0; i<output.length; i++) {
-                output[i] = (byte) ((output[i] + getKeyBlockIncrementIndex(i)) % BLOCK_LENGTH);
-            }
-
-            //Step the key blocks if a period ends (passes BLOCK_LENGTH blocks)
-            if((b+1) % BLOCK_LENGTH == 0) {
-                output = setKeyBlockPositions(b+2);
-            }
-        }
-
-        return output;
-    }
-    */
-
     /**
      * Returns an array of bytes representing the key block positions at the end of encryption,
      * if the input was `blocks` blocks long<br><br>
@@ -796,17 +758,6 @@ public class StepperFunctions {
 
         return output;
     }
-
-    /*
-    /**
-     * Returns the output of initializeKeyBlockPositions. Should be used only in testing.
-     * @param textLen length of text to test
-     * @return output of initializeKeyBlockPositions
-    public static byte[] initializeKeyBlockPositions_Testing(int textLen) {
-        return initializeKeyBlockPositions_Old(textLen);
-    }
-    */
-
 
 
     /**

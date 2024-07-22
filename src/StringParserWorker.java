@@ -73,7 +73,7 @@ public class StringParserWorker extends SwingWorker<String,String> {
      */
     @Override
     public String toString() {
-        return "Worker \"" + name + "\", input=\"" + input + " " + (input.length()) + "\", start=" + startIndex;
+        return "Worker \"" + name + "\", input(" + input.length() + ")=\"" + input + "\", start=" + startIndex;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

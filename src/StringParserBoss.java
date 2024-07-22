@@ -177,12 +177,12 @@ public class StringParserBoss extends SwingWorker<String,String> {
             workerThreads[i] = new StringParserWorker(textPieces[i], key, encrypting, Integer.toString(i), startingBlock);
 
             startingBlock += (textPieces[i].length() / StepperFunctions.BLOCK_LENGTH);
-            System.out.println(textPieces[i].length());
+//            System.out.println(textPieces[i].length());
         }
 
-        for(SwingWorker w : workerThreads) {
-            System.out.println((StringParserWorker)w);
-        }
+//        for(SwingWorker w : workerThreads) {
+//            System.out.println((StringParserWorker)w);
+//        }
 
 
         //Start each worker thread
@@ -203,7 +203,7 @@ public class StringParserBoss extends SwingWorker<String,String> {
                 workerThreads[i].cancel(true);
             }
 
-            System.out.println("Do in Background interrupted");
+            System.out.println("Do in Background interrupted- " + e.getCause());
             return "";
         }
 
