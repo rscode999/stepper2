@@ -1,0 +1,145 @@
+SWING PROJECT 3 RULES
+swing-proj-3 is a project of rules and regulations! Read this document thoroughly before starting work on the project!
+As a friendly reminder, failure to follow the rules means I will track you down and [REDACTED].
+
+
+Order of rule sections:
+-Docstring Rules
+-GUI Setup Method Rules
+-Class Structure Rules
+-Final Remarks
+
+
+
+
+Docstring Rules
+All docstrings must follow the template given below:
+/**
+ * One-line summary of the method, followed by two "<br>"" tags.
+ *
+ * Additional details of the method. This may span multiple lines.
+ * If each line exceeds ~80 characters (where a significant portion of the text crosses the thin white line on the right of the screen),
+ * any additional text must be on a new line.
+ * Any new lines must use the "<br>" tag.
+ *
+ * One or two lines of important notice for clients, i.e. preconditions not enforceable by exceptions.
+ * This area must contain "Helper to <parent method name>" if the method is a private helper to another method.
+ * -If included, the additional details section must end with two "<br>" tags.
+ *
+ * @param parameter1 the first parameter. Parameter descriptions are required!
+ * @param parameter2...
+ * @return some value. Return value descriptions are required!
+ * @throws Exception... Newly thrown exceptions are required! Note: AssertionErrors may be omitted from documentation.
+ * Exception description is not needed if throwing an Exception that an overridden function throws,
+ * or if the Exception is unlikely to be thrown (i.e. ExecutionException and InterruptedException in a SwingWorker)
+ */
+
+
+
+
+
+
+
+GUI Setup Method Rules
+
+Most, if not all, of the GUI setup methods in the main application class will return a JPanel.
+This JPanel may have a single-letter name, although this practice is not recommended.
+
+All constraints must be declared before any JComponents are added.
+
+When initializing a new JComponent, the declarations must come in the following order:
+    Constructor of the JComponent
+    Methods to modify the JComponent, in alphabetical order by method name. NOT included are methods using long lambda expressions
+    Setup methods using lambda expressions, i.e. addActionListener
+    Statements to modify the GridBagConstraints, in alphabetical order
+    Statement to add the JComponent to the target JPanel
+
+In a GridBagLayout,
+components must have a gridx at least that of the previous component added,
+and a gridy greater than that of the previous component.
+Example:
+    constraints.gridx=0;
+    constraints.gridy=0;
+    ...
+    constraints.gridx=0;
+    constraints.gridy=1;
+    ...
+    constraints.gridx=1;
+    constraints.gridy=0;
+
+
+
+
+
+
+
+
+Class Structure Rules
+Classes must match the template below. The number of comment slash lines is important.
+
+/**
+ * Docstring that conforms to the Docstring Rules
+ */
+ class MyClass... {
+
+    Constants, whose names are in all caps, with a descriptive name.
+        Example: final static int MAX_HEIGHT = 1000;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    Variable fields
+        JComponent fields should come last.
+        Must be declared in a logical order. If no logical order exists, declare in alphabetical order.
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    If the class is short (~100 lines or shorter), there may be two lines of comment slashes instead of four lines.
+
+
+    Class constructor(s). If the class has multiple constructors, the constructors with the fewest arguments go first.
+        ALL CLASSES must have an explicitly defined constructor, even if it does nothing.
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    Getter and setter methods, utility methods (i.e. toString)
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    Additional non-main methods
+        All additional methods should be in alphabetical order by the method's name.
+
+        In the case of the main application, any methods to set up the GUI (that only the constructor calls) should come first.
+        These methods may appear in the order in which the user sees them, not necessarily in alphabetical order.
+        One or two comment slash lines should come between GUI setup methods and the remaining instance methods.
+        GUI setup methods must follow the listed conventions!
+        Example:
+            private void setMenuScreen() {...}
+            private void setFinishScreen() {...}
+
+            ///////////
+
+            String setField(String input) {...}
+
+        Private helper methods may go immediately below the parent method.
+        They may break the alphabetical order rule.
+        These methods must have a message in their docstrings that says "Helper to <parent method name>"
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    Main method: public static void main(String[] args) {...}
+        Only one class, the main application, is permitted to have a main method.
+ }
+
+
+
+
+
+Final Remarks
+Curran Muhlburger is not allowed to contribute to any documentation in this project.
