@@ -152,7 +152,7 @@ public class StringParserBoss extends SwingWorker<String,String> {
         //Format the key
         byte[][] key = StepperFunctions.createKeyBlocks(inputKey, StepperFunctions.BLOCK_COUNT, StepperFunctions.BLOCK_LENGTH);
         //Put the key into the fields
-        app.fields().setKey(StepperFunctions.keyToString(key));
+        app.fields().setKey(StepperFunctions.arrToString(key));
 
         //Remove unneeded memory
         System.gc();

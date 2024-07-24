@@ -143,7 +143,6 @@ public class StepperFunctions {
         if(index<0 || index>=KEY_BLOCK_INCREMENTS.length) {
             throw new ArrayIndexOutOfBoundsException("Index must be on the interval [0," + (KEY_BLOCK_INCREMENTS.length-1) + "]");
         }
-
         return KEY_BLOCK_INCREMENTS[index];
     }
 
@@ -151,6 +150,45 @@ public class StepperFunctions {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //METHODS
+
+
+    /**
+     * Returns input, but converted to a String<br><br>
+     *
+     * input should contain numerical values representing English letters. a=0, b=1, c=2... z=25<br>
+     * The output should contain the characters represented by the numerical values in order.<br>
+     *
+     * Order: In order of increasing subarray index first, then by order of array index. input[0][1] should come
+     * before input[1][0].<br>
+     *
+     * Note: the output string should entirely consist of lowercase English ASCII characters.<br><br>
+     *
+     * Helper to the doInBackground method.
+     * Should be dropped in favor of a method that formats the key before processing the inputs.
+     *
+     * @param input array to convert to a String. Can't be null. All indices must be on [0,25]
+     * @return String containing letters represented by the input's numerical values, in order
+     */
+    public static String arrToString(byte[][] input) {
+        if(input==null) {
+            throw new AssertionError("Input cannot be null");
+        }
+
+        String output="";
+
+        for(int a=0; a<input.length; a++) {
+            for(int i=0; i<input[a].length; i++) {
+                if(input[a][i]<0 || input[a][i]>25) {
+                    throw new AssertionError("All input indices must be on the interval [0,25]");
+                }
+
+                output += (char)(input[a][i] + 97);
+            }
+        }
+
+        return output;
+    }
+
 
     /**
      * Returns a byte[][] array with `blocks` indices, each with `charsPerBlock` characters,
@@ -280,7 +318,7 @@ public class StepperFunctions {
 
         //////////////////////////
 
-        //Configure block positions
+        //Configure positions
         byte[] keyBlockBasePositions=initializeKeyBlockPositions(startBlock + text.length()/BLOCK_LENGTH);
 //        System.out.println(text);
         String output="";
@@ -324,14 +362,12 @@ public class StepperFunctions {
 
         }
 
-//        System.out.println(Arrays.toString(keyBlockPositions));
 
         for(int b=text.length()-(text.length() % BLOCK_LENGTH)-1; b>=0; b-=BLOCK_LENGTH) {
 
             currentBlock--;
             if((currentBlock+1)%BLOCK_LENGTH==0) {
                 keyBlockBasePositions = setKeyBlockPositions(currentBlock);
-//                System.out.println("PERIOD END DETECTED");
             }
 
 
@@ -501,7 +537,7 @@ public class StepperFunctions {
             keyBlockReadPositions[s] = keyBlockBasePositions[s];
         }
 
-        System.out.println(Arrays.toString(keyBlockBasePositions) + " " + text);
+//        System.out.println(Arrays.toString(keyBlockBasePositions) + " " + text);
 
         String output="";
         int currentChar=0;
@@ -601,7 +637,6 @@ public class StepperFunctions {
                 currentChar = (currentChar + (inputKey[inputKeyRow][inputKeyCol])) % 10;
                 currentChar += 48;
 
-
                 inputKeyCol++;
                 if(inputKeyCol >= inputKey[inputKeyRow].length) {
                     inputKeyCol=0;
@@ -651,15 +686,12 @@ public class StepperFunctions {
                 nonAlphas[i]=(char)0;
             }
         }
-
       /*
       for(int i=0; i<nonAlphas.length; i++) {
         System.out.print((int)nonAlphas[i] + " ");
       }
       System.out.println();
       */
-
-
         return nonAlphas;
     }
 
@@ -691,7 +723,6 @@ public class StepperFunctions {
         else {
             inputFile = new File(filename);
         }
-
 
         String output = "";
 
@@ -753,44 +784,6 @@ public class StepperFunctions {
             //Step the key blocks if a period ends (passes BLOCK_LENGTH blocks)
             if((b+1) % BLOCK_LENGTH == 0) {
                 output = setKeyBlockPositions(b+2);
-            }
-        }
-
-        return output;
-    }
-
-
-    /**
-     * Returns input, but converted to a String<br><br>
-     *
-     * input should contain numerical values representing English letters. a=0, b=1, c=2... z=25<br>
-     * The output should contain the characters represented by the numerical values in order.<br>
-     *
-     * Order: In order of increasing subarray index first, then by order of array index. input[0][1] should come
-     * before input[1][0].<br>
-     *
-     * Note: the output string should entirely consist of lowercase English ASCII characters.<br><br>
-     *
-     * Helper to the doInBackground method.
-     * Should be dropped in favor of a method that formats the key before processing the inputs.
-     *
-     * @param input array to convert to a String. Can't be null. All indices must be on [0,25]
-     * @return String containing letters represented by the input's numerical values, in order
-     */
-    public static String keyToString(byte[][] input) {
-        if(input==null) {
-            throw new AssertionError("Input cannot be null");
-        }
-
-        String output="";
-
-        for(int a=0; a<input.length; a++) {
-            for(int i=0; i<input[a].length; i++) {
-                if(input[a][i]<0 || input[a][i]>25) {
-                    throw new AssertionError("All input indices must be on the interval [0,25]");
-                }
-
-                output += (char)(input[a][i] + 97);
             }
         }
 
@@ -974,7 +967,7 @@ public class StepperFunctions {
         char charReplacement='#';
 
         //to protect me from my own stoopidity
-        if(outChars.length!=inChars.length) throw new AssertionError("warning: check lengths");
+        if(outChars.length != inChars.length) throw new AssertionError("warning: check lengths");
 
 
         //loop through outChar strings
@@ -1052,7 +1045,6 @@ public class StepperFunctions {
         if(text==null) throw new AssertionError("Text can't be null");
 
         text=text.toLowerCase();
-
 
         String output="";
         for(int i=0; i<text.length(); i++) {
@@ -1181,6 +1173,7 @@ public class StepperFunctions {
         return cutoff;
     }
 
+
     /**
      * Returns the key block positions for the given text length.<br><br>
      *
@@ -1201,7 +1194,6 @@ public class StepperFunctions {
 
         long quotient=textLength;
         double decimalPortion=0;
-
 
         //Eliminate block spill-overs.
         quotient = quotient % ((long)Math.pow(BLOCK_LENGTH, BLOCK_COUNT));
@@ -1238,15 +1230,6 @@ public class StepperFunctions {
         }
 
         return output;
-    }
-
-    /**
-     * Returns value that setKeyBlockPositions returns. For testing purposes only
-     * @param textLength text length to test
-     * @return key block positions from setKeyBlockPositions
-     */
-    public static byte[] setKeyBlockPositions_Testing(long textLength) {
-        return setKeyBlockPositions(textLength);
     }
 
 

@@ -81,7 +81,7 @@ public class StepperApp extends JFrame {
      * All possible options for the punctuation mode
      */
     final private static String[] PUNCTUATION_SELECTION_OPTIONS = new String[] {"Select punctuation preferences",
-            "Include All Punctuation", "Remove Spaces", "Remove Punctuation"};
+            "Remove Punctuation", "Remove Spaces", "Include All Punctuation"};
 
     /**
      * Default options for the number of threads to use.<br><br>
@@ -282,7 +282,7 @@ public class StepperApp extends JFrame {
         setScreen("LOGIN");
 
         //Initialize the app window
-        setTitle("Stepper App 2");
+        setTitle("Stepper 2 App");
         setSize(APP_DIMENSIONS);
         setFocusable(true);
         requestFocus();
@@ -833,23 +833,19 @@ public class StepperApp extends JFrame {
                 }
             }
 
-
 //            System.out.println("\"" + fields.text() + "\"");
 //            System.out.println("\"" + fields.key() + "\"");
 
             //Set the operation mode based on the user's selection
             boolean encrypting = !operationModeSelector.getSelectedItem().equals(OPERATION_SELECTION_OPTIONS[2]);
 
-            //Set the punctuation mode based on selection
-            byte punctMode;
+            //Set the punctuation mode based on selection. 0=leave as-is, 1=no spaces, 2=no punctuation
+            byte punctMode=2;
             if(punctSelector.getSelectedItem().equals(PUNCTUATION_SELECTION_OPTIONS[3])) {
-                punctMode=2;
+                punctMode=0;
             }
             else if(punctSelector.getSelectedItem().equals(PUNCTUATION_SELECTION_OPTIONS[2])) {
                 punctMode=1;
-            }
-            else {
-                punctMode=0;
             }
 
 
@@ -870,7 +866,7 @@ public class StepperApp extends JFrame {
             }
             //Anything else: use the selector's chosen option
             else {
-                fields.setThreadCount(Integer.parseInt((String)threadCountSelector.getSelectedItem()));
+                fields.setThreadCount(Integer.parseInt((String) threadCountSelector.getSelectedItem()));
             }
 
             //Yeet the threads
