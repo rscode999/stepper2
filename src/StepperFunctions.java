@@ -68,9 +68,9 @@ public class StepperFunctions {
                 "123567890", "314159265", "69420", "test1", "iloveyou",
                 "asdfghjkl", "Password1", "12345", "123456", "1234567890", "123467890", "123567890",
                 "1", "2", "3", "4", "5", "6", "7", "8", "9", "abcd1234", "987654321",
-                "asdf", "password", "letmein", "", "0"};
+                "asdf", "password", "0", "letmein", ""};
 
-        if(!verifyConstantInvars()) {
+        if(constantInvarsBroken()) {
             throw new AssertionError("An invariant of a constant is not true");
         }
     }
@@ -94,19 +94,19 @@ public class StepperFunctions {
 
         VALID_PASSWORDS = passwords;
 
-        if(!verifyConstantInvars()) {
+        if(constantInvarsBroken()) {
             throw new AssertionError("An invariant of a constant is not true");
         }
     }
 
     /**
-     * Returns true if the invariants of every constant are true, false otherwise<br><br>
+     * Returns true if the invariants of a constant are broken, false otherwise<br><br>
      *
      * Helper to the class constructors
      *
-     * @return true if invariants satisfied, false otherwise
+     * @return true if invariants broken, false otherwise
      */
-    private boolean verifyConstantInvars() {
+    private boolean constantInvarsBroken() {
         if(!(BLOCK_LENGTH>0 && BLOCK_COUNT>0 &&
              DEFAULT_INPUT_FILE != null && DEFAULT_INPUT_FILE.length()>3 &&
              DEFAULT_INPUT_FILE.endsWith(".txt") &&
@@ -114,16 +114,19 @@ public class StepperFunctions {
              MAX_THREADS>=1 &&
              VALID_PASSWORDS != null)
          ) {
-            return false;
+            return true;
         }
 
         for(String s : VALID_PASSWORDS) {
             if(s==null) {
-                return false;
+                return true;
             }
         }
+        for(byte b : KEY_BLOCK_INCREMENTS) {
+            if(b < 0) return true;
+        }
 
-        return true;
+        return false;
     }
 
 
