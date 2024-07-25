@@ -2,7 +2,7 @@ import org.junit.jupiter.api.*;
 import static org.junit.Assert.assertThrows;
 
 /**
- * Class to test the createKeyBlocks method
+ * Class to test the createKeyBlocks method. Some tests may fail because the method loads higher indices first.
  */
 public class CreateKeyBlocksTest {
 

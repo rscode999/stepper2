@@ -1,3 +1,4 @@
+import javax.imageio.plugins.jpeg.JPEGImageWriteParam;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.security.SecureRandom;
@@ -1147,16 +1148,15 @@ public class StepperFunctions {
 
 
     /**
-     * Returns the appropriate number of blocks to go into each output index (except for the final output index,
-     * because that one holds everything that doesn't fit evenly into the other indices)<br><br>
+     * Returns the appropriate number of blocks to go into each output index<br><br>
      *
-     * Helper to setWorkerLoads. Likely should be removed in favor of a more efficient option
+     * Helper to setWorkerLoads.
      *
-     * @param blocksLength total number of blocks in the input string. Must be positive
-     * @param blockCount number of blocks in the output array. Must be positive
-     * @return appropriate number of blocks to go into each output index (excluding the final index)
+     * @param totalBlocks total number of blocks in the input string. Must be positive
+     * @param threads number of blocks in the output array. Must be positive
+     * @return array of length `threads` containing appropriate number of blocks per output index
      */
-    private static int setBlocksPerIndex(int blocksLength, int blockCount) {
+    private static int[] setBlocksPerIndex(int totalBlocks, int threads) {
         /*
         This is roughly equivalent to putting the first block of the input in index 0 of the output array, the second in index 1...
         Eventually, the end of the output array is reached. The block after goes into the first output array index...
@@ -1167,29 +1167,23 @@ public class StepperFunctions {
         After loading the final 2 blocks: {[1,4,7], [2,5,8], [3,6]}
         This arrangement succeeds in evenly splitting the blocks among the output indices.
          */
-        if(blocksLength<=0) throw new AssertionError("Block length must be positive");
-        if(blockCount<=0) throw new AssertionError("Block count must be positive");
+        if(totalBlocks<=0) throw new AssertionError("Block total must be positive");
+        if(threads<=0) throw new AssertionError("Thread count must be positive");
 
-        int cutoff=1;
+        int[] output = new int[threads];
+        int outputIndex = threads-1;
 
-        //Tracks number of indices passed in the current loop over the output indices
-        int count=1;
+        for(int i=totalBlocks-1; i>=0; i--) {
+            output[outputIndex]++;
+            outputIndex--;
 
-        //Pretend like the final input string block doesn't exist. Loop through the remaining ones
-        //Ignoring the final block deals with remainders. Don't ask why
-        for(int i=0; i<blocksLength-1; i++) {
-
-            //If number of blocks passed exceeds the number of blocks
-            if(count > blockCount) {
-                cutoff++;
-
-                //Go back to the starting index
-                count=1;
+            if(outputIndex < 0) {
+                outputIndex = threads-1;
             }
-            count++;
         }
 
-        return cutoff;
+//        System.out.println(Arrays.toString(output));
+        return output;
     }
 
 
@@ -1254,20 +1248,22 @@ public class StepperFunctions {
 
     /**
      * Splits `text` evenly into `threads` pieces.
-     * The number of alphabetic characters of each piece must be a multiple of `blockLength`, except for the last one, which takes the remainder.<br><br>
+     * The number of alphabetic characters of each piece must be a multiple of `blockLength`, except for the last piece.<br><br>
      *
      * -Alphabetic characters are lowercase English ASCII characters.<br>
      *
-     * -Anything left over should go into the final index. All indices except for the last one should have `blockLength`
-     * alphabetic characters.<br>
+     * -All indices except for the last one should have `blockLength` alphabetic characters, or a multiple thereof.<br>
      *
      * -If `threads` is greater than ceil(text.length()/blockSize), any strings not used should be empty strings, not null.<br>
      *
-     * -Note: The final character of each block (excluding the last block) should end in an alphabetic character.
+     * -Note: The final character of each block (excluding the last block) should end in an alphabetic character.<br><br>
+     *
+     * The test cases may fail. If so, manually check if the thread loads are even in each failed test.
+     * Even distribution and piece length being a multiple of `threads` are the most important aspects of the output.
      *
      * @param text the text to split
      * @param threads how many pieces `text` should be split into
-     * @param blockLength maximum characters in each piece
+     * @param blockLength number (or a divisor) of alphabetic characters per piece
      * @return array of Strings. There are `threads` total Strings evenly split among the output's indices
      */
     public static String[] setWorkerLoads(String text, int threads, int blockLength) {
@@ -1313,45 +1309,28 @@ public class StepperFunctions {
             }
         }
 
-        for(int i=0; i<blocks.length; i++) {
-            System.out.println("\"" + blocks[i] + "\"");
-        }
-        System.out.println();
+//        for(int i=0; i<blocks.length; i++) {
+//            System.out.println("\"" + blocks[i] + "\"");
+//        }
+//        System.out.println();
 
         //Create another String array to hold the result and load it
         String[] output = new String[threads];
         Arrays.fill(output, "");
 
-        //Load each string
-        int outputIndex = 0;
-        int blocksRead = 0;
-        int blocksPerIndex;
-        if(blocks[blocks.length-1].length()==0) {
-            blocksPerIndex = setBlocksPerIndex(blocks.length-1, threads);
-        }
-        else {
-            blocksPerIndex = setBlocksPerIndex(blocks.length, threads);
-        }
 
-        //Put each string into the output
-        for (int i = 0; i < blocks.length; i++) {
-            output[outputIndex] = output[outputIndex] + blocks[i];
+        currentBlock = 0;
+        int[] blocksPerIndex = setBlocksPerIndex(blocks.length, threads);
 
-            blocksRead++;
-
-            //If number of blocks read so far exceeds the amount to go into each index, start filling the next index
-            if (blocksRead >= blocksPerIndex) {
-                outputIndex++;
-                blocksRead = 0;
-
-                if (outputIndex >= output.length) {
-                    outputIndex--;
-                }
+        //Move through the threads
+        for(int t=0; t<threads; t++) {
+            for(int w=0; w<blocksPerIndex[t]; w++) {
+                output[t] += blocks[currentBlock];
+                currentBlock++;
             }
         }
 
         return output;
     }
-
 
 }

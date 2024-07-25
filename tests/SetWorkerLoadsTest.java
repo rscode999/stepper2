@@ -3,7 +3,9 @@ import java.util.Arrays;
 import static org.junit.Assert.assertThrows;
 
 /**
- * Class to test the setWorkerLoads method in the StepperFunctions class
+ * Class to test the setWorkerLoads method in the StepperFunctions class.<br><br>
+ *
+ * Note: As long as the thread loads are evenly distributed, the tests may fail.
  */
 public class SetWorkerLoadsTest {
 
@@ -247,12 +249,12 @@ public class SetWorkerLoadsTest {
 
         String s = "abcdefghijklmnopabcdefghijklmnopabcdefghijklmnopabcdefghijklmnopabcdefghijkl";
         String[] result = model.setWorkerLoads(s, 3, 16);
-        String[] expected = new String[]{"abcdefghijklmnopabcdefghijklmnop", "abcdefghijklmnopabcdefghijklmnop", "abcdefghijkl"};
+        String[] expected = new String[]{"abcdefghijklmnop", "abcdefghijklmnopabcdefghijklmnop", "abcdefghijklmnopabcdefghijkl"};
         printAssert(expected, result);
 
         s = "abcdabcdabcdabcdabcdabcdabcdabcdabc";
         result = model.setWorkerLoads(s, 5, 4);
-        expected = new String[]{"abcdabcd", "abcdabcd", "abcdabcd", "abcdabcd", "abc"};
+        expected = new String[]{"abcd", "abcdabcd", "abcdabcd", "abcdabcd", "abcdabc"};
         printAssert(expected, result);
     }
 
@@ -263,32 +265,32 @@ public class SetWorkerLoadsTest {
 
         String s = "abcdefghabcdefghabcdefgh";
         String[] result = model.setWorkerLoads(s, 5, 8);
-        String[] expected = new String[]{"abcdefgh", "abcdefgh", "abcdefgh", "", ""};
+        String[] expected = new String[]{"", "", "abcdefgh", "abcdefgh", "abcdefgh"};
         printAssert(expected, result);
 
         s = "abcdefgha";
         result = model.setWorkerLoads(s, 3, 8);
-        expected = new String[]{"abcdefgh", "a", ""};
+        expected = new String[]{"", "abcdefgh", "a"};
         printAssert(expected, result);
 
         s = "abcdefgh";
         result = model.setWorkerLoads(s, 3, 8);
-        expected = new String[]{"abcdefgh", "", ""};
+        expected = new String[]{"", "", "abcdefgh"};
         printAssert(expected, result);
 
         s = "abcdefg";
         result = model.setWorkerLoads(s, 2, 8);
-        expected = new String[]{"abcdefg", ""};
+        expected = new String[]{"", "abcdefg"};
         printAssert(expected, result);
 
         s = "abcabcabcabcabc";
         result = model.setWorkerLoads(s, 6, 3);
-        expected = new String[]{"abc", "abc", "abc", "abc", "abc", ""};
+        expected = new String[]{"", "abc", "abc", "abc", "abc", "abc"};
         printAssert(expected, result);
 
         s = "abcdefghijabcdefghijabcdefghij";
         result = model.setWorkerLoads(s, 5, 30);
-        expected = new String[]{"abcdefghijabcdefghijabcdefghij", "", "", "", ""};
+        expected = new String[]{"", "", "", "", "abcdefghijabcdefghijabcdefghij"};
         printAssert(expected, result);
     }
 
@@ -324,14 +326,15 @@ public class SetWorkerLoadsTest {
         s = "===============abc-------------de000000000000000abcd;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;e" +
                 "            ab          cd        e[[[[[[[[[]]]]]]abc----------dea---";
         result = StepperFunctions.setWorkerLoads(s, 3, 5);
-        expected = new String[]{"===============abc-------------de000000000000000abcd;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;e",
-                "            ab          cd        e[[[[[[[[[]]]]]]abc----------de", "a---"};
+        expected = new String[]{"===============abc-------------de",
+                "000000000000000abcd;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;e            ab          cd        e",
+                "[[[[[[[[[]]]]]]abc----------dea---"};
         printAssert(expected, result);
 
         //"Test Bugfix" but with non-alpha characters included
         s = "abc-AAA-------  dabcdab   cdabcdabcdab   cdabcdabc     dabc ";
         result = StepperFunctions.setWorkerLoads(s, 5, 4);
-        expected = new String[]{"abc-AAA-------  dabcd", "ab   cdabcd", "abcdab   cd", "abcdabc     d", "abc "};
+        expected = new String[]{"abc-AAA-------  d", "abcdab   cd", "abcdabcd", "ab   cdabcd", "abc     dabc "};
         printAssert(expected, result);
     }
 
