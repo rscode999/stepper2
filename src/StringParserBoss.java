@@ -101,7 +101,9 @@ public class StringParserBoss extends SwingWorker<String,String> {
 
 
         //Create loads
-        String[] textPieces = StepperFunctions.setWorkerLoads(text, app.fields().threadCount(), StepperFunctions.BLOCK_LENGTH);
+        String[] textPieces = StepperFunctions.setWorkerLoads(text,
+                app.fields().threadCount(),
+                StepperFunctions.BLOCK_LENGTH);
 
         //Make the worker threads: one index for each piece of the text
         workerThreads = new StringParserWorker[textPieces.length];
@@ -112,9 +114,9 @@ public class StringParserBoss extends SwingWorker<String,String> {
             startingBlock += StepperFunctions.countAlphaChars(textPieces[i]) / StepperFunctions.BLOCK_LENGTH;
         }
 
-//        for(StringParserWorker w : workerThreads) {
-//            System.out.println(w);
-//        }
+        for(StringParserWorker w : workerThreads) {
+            System.out.println(w);
+        }
 
         System.gc();
         app.setLoadingStatusText("Executing...");

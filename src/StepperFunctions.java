@@ -209,6 +209,30 @@ public class StepperFunctions {
         return output;
     }
 
+    /**
+     * Returns the number of lowercase English ASCII characters in `input`. If more than `maxChars` characters have been counted,
+     * stop counting and return.
+     *
+     * @param input String to count alphabetic characters in
+     * @param maxChars highest possible value to return
+     * @return number of alphabetic characters
+     */
+    public static int countAlphaChars(String input, int maxChars) {
+        int output = 0;
+
+        for(int i=0; i<input.length(); i++) {
+            if(output > maxChars) {
+                return output;
+            }
+
+            if((int)input.charAt(i)>=97 && (int)input.charAt(i)<=122) {
+                output++;
+            }
+        }
+
+        return output;
+    }
+
 
     /**
      * Returns a byte[][] array with `blocks` indices, each with `charsPerBlock` characters,
