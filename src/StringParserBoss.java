@@ -5,7 +5,6 @@ import java.util.concurrent.ExecutionException;
 
 /**
  * Created by a StringParserDispatcher to process the Dispatcher's input.<br><br>
- *
  */
 public class StringParserBoss extends SwingWorker<String,String> {
 
@@ -117,6 +116,7 @@ public class StringParserBoss extends SwingWorker<String,String> {
 //            System.out.println(w);
 //        }
 
+        System.gc();
         app.setLoadingStatusText("Executing...");
 
         //Start each worker thread
@@ -147,8 +147,6 @@ public class StringParserBoss extends SwingWorker<String,String> {
 //        }
 
         System.gc();
-        app.setLoadingStatusText("Finalizing...");
-        System.out.println("done");
 
         //Create the output
         String output = "";
@@ -157,7 +155,9 @@ public class StringParserBoss extends SwingWorker<String,String> {
         }
 
 
-        
+        System.gc();
+        app.setLoadingStatusText("Finalizing...");
+
 
         //Do the numbers
         if(encrypting) {

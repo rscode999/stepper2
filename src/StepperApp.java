@@ -846,8 +846,7 @@ public class StepperApp extends JFrame {
                 punctMode=0;
             }
 
-
-            //Reset the progress bar
+            //Reset the progress
             setLoadingStatusText("Loading input...");
 
 
