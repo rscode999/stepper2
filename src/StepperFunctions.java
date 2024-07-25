@@ -166,9 +166,6 @@ public class StepperFunctions {
      *
      * Note: the output string should entirely consist of lowercase English ASCII characters.<br><br>
      *
-     * Helper to the doInBackground method.
-     * Should be dropped in favor of a method that formats the key before processing the inputs.
-     *
      * @param input array to convert to a String. Can't be null. All indices must be on [0,25]
      * @return String containing letters represented by the input's numerical values, in order
      */
@@ -186,6 +183,25 @@ public class StepperFunctions {
                 }
 
                 output += (char)(input[a][i] + 97);
+            }
+        }
+
+        return output;
+    }
+
+
+    /**
+     * Returns the number of lowercase English ASCII characters in `input`.
+     *
+     * @param input String to count alphabetic characters in
+     * @return number of alphabetic characters
+     */
+    public static int countAlphaChars(String input) {
+        int output = 0;
+
+        for(int i=0; i<input.length(); i++) {
+            if((int)input.charAt(i)>=97 && (int)input.charAt(i)<=122) {
+                output++;
             }
         }
 

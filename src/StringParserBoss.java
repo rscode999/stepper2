@@ -105,18 +105,18 @@ public class StringParserBoss extends SwingWorker<String,String> {
 
         //Make the worker threads: one index for each piece of the text
         workerThreads = new StringParserWorker[textPieces.length];
-        int startingIndex = 0;
+        int startingBlock = 0;
         for (int i = 0; i < workerThreads.length; i++) {
-            workerThreads[i] = new StringParserWorker(textPieces[i], key, encrypting, punctMode, Integer.toString(i), startingIndex);
+            workerThreads[i] = new StringParserWorker(textPieces[i], key, encrypting, punctMode, Integer.toString(i), startingBlock);
 
-            startingIndex += textPieces[i].length();
-//            System.out.println(textPieces[i].length());
+            startingBlock += StepperFunctions.countAlphaChars(textPieces[i]) / StepperFunctions.BLOCK_LENGTH;
         }
 
         for(SwingWorker w : workerThreads) {
             System.out.println((StringParserWorker)w);
         }
 
+        app.setProgress(33);
 
         //Start each worker thread
         for (int i = 0; i < workerThreads.length; i++) {
@@ -155,7 +155,7 @@ public class StringParserBoss extends SwingWorker<String,String> {
         workerThreads = null;
         resultPieces = null;
         System.gc();
-        app.setProgress(75);
+        app.setProgress(80);
         System.out.println("done");
 
 

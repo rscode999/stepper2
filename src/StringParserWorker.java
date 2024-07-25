@@ -1,5 +1,4 @@
 import javax.swing.*;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Does a small portion of a StringParserBoss's work. Cannot have a field that can hold a StepperApp.
@@ -33,9 +32,9 @@ public class StringParserWorker extends SwingWorker<String,String> {
 
 
     /**
-     * The index of the first character in `input` in the Boss's input string. Can't be negative
+     * The block number in the Boss's input string. Can't be negative
      */
-    final private int startIndex;
+    final private int startBlock;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -49,15 +48,15 @@ public class StringParserWorker extends SwingWorker<String,String> {
      * @param encrypting true if this Worker should encrypt its text, false otherwise
      * @param punctMode 0 if including punctuation, 1 if excluding spaces, 2 if alphabetic characters only
      * @param name the name of the Worker
-     * @param startIndex where to start processing the input at. Must be at least 0
+     * @param startBlock where to start processing the input at. Must be at least 0
      */
     public StringParserWorker(String givenInput, byte[][] givenKey, boolean encrypting,
-                              byte punctMode, String name, int startIndex) {
+                              byte punctMode, String name, int startBlock) {
         assert givenInput!=null;
         assert givenKey!=null;
         assert punctMode>=0 && punctMode<=2;
         assert name!=null;
-        assert startIndex>=0;
+        assert startBlock>=0;
 
         //Make deep copy of the input
         this.input=givenInput;
@@ -74,7 +73,7 @@ public class StringParserWorker extends SwingWorker<String,String> {
         this.encrypting=encrypting;
         this.punctMode=punctMode;
         this.name=name;
-        this.startIndex=startIndex;
+        this.startBlock=startBlock;
     }
 
 
@@ -90,7 +89,7 @@ public class StringParserWorker extends SwingWorker<String,String> {
      */
     @Override
     public String toString() {
-        return "Worker \"" + name + "\", input(" + input.length() + ")=\"" + input + "\", start=" + startIndex;
+        return "Worker \"" + name + "\", input(" + input.length() + ")=\"" + input + "\", startblock=" + startBlock;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -116,10 +115,10 @@ public class StringParserWorker extends SwingWorker<String,String> {
         //Do process
         String output="";
         if (encrypting) {
-            output = StepperFunctions.encrypt(input, key.clone(), startIndex);
+            output = StepperFunctions.encrypt(input, key.clone(), startBlock);
         }
         else {
-            output = StepperFunctions.decrypt(input, key.clone(), startIndex);
+            output = StepperFunctions.decrypt(input, key.clone(), startBlock);
         }
 
         //Reinsert punctuation
