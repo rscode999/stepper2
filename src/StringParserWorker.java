@@ -1,4 +1,5 @@
 import javax.swing.*;
+import java.util.Arrays;
 
 /**
  * Does a small portion of a StringParserBoss's work. Cannot have a field that can hold a StepperApp.
@@ -105,7 +106,7 @@ public class StringParserWorker extends SwingWorker<String,String> {
     protected String doInBackground() {
 
         //Remove non-alphabetic characters
-        if(punctMode==1) {
+        if(encrypting && punctMode==1) {
             input = StepperFunctions.removeSpaces(input);
         }
 
@@ -115,14 +116,16 @@ public class StringParserWorker extends SwingWorker<String,String> {
         //Do process
         String output="";
         if (encrypting) {
-            output = StepperFunctions.encrypt(input, key.clone(), startBlock);
+            output = StepperFunctions.encrypt(input, key, startBlock);
         }
         else {
-            output = StepperFunctions.decrypt(input, key.clone(), startBlock);
+            output = StepperFunctions.decrypt(input, key, startBlock);
         }
 
         //Reinsert punctuation
         output = StepperFunctions.recombineNonAlphas(output, nonAlphas, punctMode<=1);
+
+        //Numbers are done by the Boss
 
         return output;
     }

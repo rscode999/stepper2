@@ -93,17 +93,12 @@ public class StepperAppFields {
     }
 
     /**
-     * Returns the thread count minus 1. If the count is 1 or less, returns the unmodified thread count<br><br>
-     * Necessary because the StringParserBoss is a worker thread and must be treated as such
+     * Returns the thread count
      *
-     * @return adjusted thread count
+     * @return thread count
      */
     public int threadCount() {
-        if(threadCount <= 1) {
-            return threadCount;
-        }
-
-        return threadCount-1;
+        return threadCount;
     }
 
     /**

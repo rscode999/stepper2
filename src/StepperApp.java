@@ -184,6 +184,11 @@ public class StepperApp extends JFrame {
 
 
     /**
+     * Loading text
+     */
+    private JLabel loadingStatusText;
+
+    /**
      * Header for the current screen
      */
     private JLabel textHeader;
@@ -203,12 +208,6 @@ public class StepperApp extends JFrame {
      * Password input on the login screen
      */
     private JPasswordField passwordInput;
-
-
-    /**
-     * Used to track the processing progress
-     */
-    private JProgressBar progressBar;
 
 
     /**
@@ -356,17 +355,12 @@ public class StepperApp extends JFrame {
 
 
     /**
-     * Sets the progress bar to `percent` percent. `percent` must be on the interval [0,100]. If not, throws IllegalArgumentException
+     * Sets the loading status text to `newText`.
      *
-     * @param percent new percentage to display on the progress bar
-     * @throws IllegalArgumentException if `percent` is not on [0,100]. Gives a descriptive error message
+     * @param newText what to display on the loading text
      */
-    public void setProgress(int percent) {
-        if(percent<0 || percent>100) {
-            throw new IllegalArgumentException("New percentage must be on the interval [0,100]");
-        }
-
-        progressBar.setValue(percent);
+    public void setLoadingStatusText(String newText) {
+        loadingStatusText.setText(newText);
     }
 
 
@@ -847,10 +841,14 @@ public class StepperApp extends JFrame {
             else if(punctSelector.getSelectedItem().equals(PUNCTUATION_SELECTION_OPTIONS[2])) {
                 punctMode=1;
             }
+            //Set punct mode to include everything if decrypting
+            if(!encrypting) {
+                punctMode=0;
+            }
 
 
             //Reset the progress bar
-            progressBar.setValue(0);
+            setLoadingStatusText("Loading input...");
 
 
             //Set number of threads
@@ -975,18 +973,19 @@ public class StepperApp extends JFrame {
         panel.setLayout(layout);
 
         //"Loading input" text
-        textHeader = new JLabel("Loading input...");
-        textHeader.setFont(MEDIUM_FONT);
+//        textHeader = new JLabel("Loading input...");
+//        textHeader.setFont(MEDIUM_FONT);
+//        constraints.gridx=0;
+//        constraints.gridy=0;
+//        panel.add(textHeader, constraints);
+
+        //Loading text
+        loadingStatusText = new JLabel();
+        loadingStatusText.setBackground(ACCENT_COLOR);
+        loadingStatusText.setFont(MEDIUM_FONT);
         constraints.gridx=0;
         constraints.gridy=0;
-        panel.add(textHeader, constraints);
-
-        //Progress bar
-        progressBar = new JProgressBar();
-        progressBar.setPreferredSize(new Dimension((int)(APP_DIMENSIONS.width/3.0), (int)(APP_DIMENSIONS.height/16.0)));
-        constraints.gridx=0;
-        constraints.gridy=1;
-        panel.add(progressBar, constraints);
+        panel.add(loadingStatusText, constraints);
 
         //Spacer
         JPanel textHeaderSpacer = new JPanel();

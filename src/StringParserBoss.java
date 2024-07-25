@@ -12,7 +12,7 @@ public class StringParserBoss extends SwingWorker<String,String> {
     /**
      * The worker threads that this Boss employs. The array's length may vary depending on the number of threads used
      */
-    private SwingWorker<String,String>[] workerThreads;
+    private StringParserWorker[] workerThreads;
 
 
     /**
@@ -86,7 +86,6 @@ public class StringParserBoss extends SwingWorker<String,String> {
         //Switch the screen
         app.setScreen("PROCESSING");
 
-
         //Take the input
         StepperAppFields fields = app.fields();
         String text = fields.text();
@@ -100,6 +99,8 @@ public class StringParserBoss extends SwingWorker<String,String> {
         //Load formatted key into app
         app.fields().setKey(StepperFunctions.arrToString(key));
 
+
+
         //Create loads
         String[] textPieces = StepperFunctions.setWorkerLoads(text, app.fields().threadCount(), StepperFunctions.BLOCK_LENGTH);
 
@@ -112,16 +113,18 @@ public class StringParserBoss extends SwingWorker<String,String> {
             startingBlock += StepperFunctions.countAlphaChars(textPieces[i]) / StepperFunctions.BLOCK_LENGTH;
         }
 
-        for(SwingWorker w : workerThreads) {
-            System.out.println((StringParserWorker)w);
-        }
+//        for(StringParserWorker w : workerThreads) {
+//            System.out.println(w);
+//        }
 
-        app.setProgress(33);
+        app.setLoadingStatusText("Executing...");
 
         //Start each worker thread
         for (int i = 0; i < workerThreads.length; i++) {
             workerThreads[i].execute();
         }
+
+
 
         //Make array to hold the result. Put the results from each thread into the result
         String[] resultPieces = new String[textPieces.length];
@@ -139,10 +142,13 @@ public class StringParserBoss extends SwingWorker<String,String> {
             System.out.println("Do in Background interrupted- " + e.getCause());
             return "";
         }
-
 //        for (String s : result) {
 //            System.out.println("\"" + s + "\"");
 //        }
+
+        System.gc();
+        app.setLoadingStatusText("Finalizing...");
+        System.out.println("done");
 
         //Create the output
         String output = "";
@@ -151,22 +157,19 @@ public class StringParserBoss extends SwingWorker<String,String> {
         }
 
 
+        
+
+        //Do the numbers
+        if(encrypting) {
+            output = StepperFunctions.encryptNumbers(output, key);
+        }
+        else {
+            output = StepperFunctions.decryptNumbers(output, key);
+        }
+
         //Remove unneeded memory
         workerThreads = null;
         resultPieces = null;
-        System.gc();
-        app.setProgress(80);
-        System.out.println("done");
-
-
-        //Do the numbers
-//        if(encrypting) {
-//            output = StepperFunctions.encryptNumbers(output, key);
-//        }
-//        else {
-//            output = StepperFunctions.decryptNumbers(output, key);
-//        }
-
 
         //Screen changing occurs in the StringParserDispatcher that created this Boss
         return output;
