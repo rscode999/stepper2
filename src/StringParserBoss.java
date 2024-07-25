@@ -123,8 +123,7 @@ public class StringParserBoss extends SwingWorker<String,String> {
         for (int i = 0; i < workerThreads.length; i++) {
             workerThreads[i].execute();
         }
-
-
+        
 
         //Make array to hold the result. Put the results from each thread into the result
         String[] resultPieces = new String[textPieces.length];
