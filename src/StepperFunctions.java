@@ -954,7 +954,7 @@ public class StepperFunctions {
      * @param input letter to remove diacritics from
      * @return copy of input without diacritics
      */
-    private static char removeDiacritics(char input) {
+    public static char removeDiacritics(char input) {
 
         String a="" + input;
         a=a.toLowerCase();
@@ -1145,7 +1145,7 @@ public class StepperFunctions {
         This is roughly equivalent to putting the first block of the input in index 0 of the output array, the second in index 1...
         Eventually, the end of the output array is reached. The block after goes into the first output array index...
 
-        Suppose there are 8 blocks in the inout and 3 indices in the output.
+        Suppose there are 8 blocks in the input and 3 indices in the output.
         After loading the first 3 blocks: {[1], [2], [3]}
         After loading the next 3 blocks: {[1,4], [2,5], [3,6]}
         After loading the final 2 blocks: {[1,4,7], [2,5,8], [3,6]}
@@ -1237,73 +1237,85 @@ public class StepperFunctions {
 
 
     /**
-     * Splits `text` evenly into `blockCount` blocks.
-     * The length of each block must be a multiple of `minBlockSize`, except for the last one, which takes the remainder.<br><br>
+     * Splits `text` evenly into `threads` pieces.
+     * The number of alphabetic characters of each piece must be a multiple of `blockLength`, except for the last one, which takes the remainder.<br><br>
      *
-     * ===Imagine if every character except for the blockCount-th one is removed from the text. Divide the modified text into `blockCount`
-     * equal portions. Then reinsert whatever was removed.<br>
-     * Anything left over should go into the final index. All indices except for the last one should have a length that's
-     * evenly divisible by `minBlockSize`.<br>
+     * -Alphabetic characters are lowercase English ASCII characters.<br>
      *
-     * ---Example: (spaces are added for clarity and should be ignored)
-     * setWorkerLoads("12345678 90123456 78901234 56789012 34567890", 3, 8) = {"1234567890123456", "7890123456789012", "5678901234567890"}
-     * setWorkerLoads("12345678901234567890", 2, 8) = {"12345678", "901234567890"}
-     * setWorkerLoads("1234567890123456789012345678901234567890", 2, 8) = {"1234567890123456", "7890123456789012345678901234567890"}
-     * setWorkerLoads("12345 12345 12345 123", 3, 5) = {"12345", "12345", "12345123"}
+     * -Anything left over should go into the final index. All indices except for the last one should have `blockLength`
+     * alphabetic characters.<br>
      *
-     * <br>
-     * ===If `blockCount` is greater than ceil(text.length()/blockSize), any strings not used should be empty strings, not null.<br>
-     * ---Example: setWorkerLoads("12345678901234567890", 6, 8) = {"12345678", "90123456", "7890", "", "", ""}
+     * -If `threads` is greater than ceil(text.length()/blockSize), any strings not used should be empty strings, not null.<br>
      *
-     * <br>
-     * ===Throws IllegalArgumentException if `text` is null, or `blockCount` or `minBlockSize` is not positive.
-     * <br><br>
-     *
-     * Sorry for the cluttered docstring
+     * -Note: The final character of each block (excluding the last block) should end in an alphabetic character.
      *
      * @param text the text to split
-     * @param blockCount how many pieces `text` should be split into
-     * @param minBlockSize maximum characters in each piece
-     * @return array of Strings. There are `blockCount` total Strings evenly split among the output's indices
+     * @param threads how many pieces `text` should be split into
+     * @param blockLength maximum characters in each piece
+     * @return array of Strings. There are `threads` total Strings evenly split among the output's indices
      */
-    public static String[] setWorkerLoads(String text, int blockCount, int minBlockSize) {
+    public static String[] setWorkerLoads(String text, int threads, int blockLength) {
 
-        if (text == null || blockCount <= 0 || minBlockSize<=0) {
+        if (text == null || threads <= 0 || blockLength<=0) {
             throw new AssertionError("No argument can be null or zero");
         }
 
+        //Find effective length of the text to create the blocks without wasting memory
+        int alphaChars = 0;
+        for(int i=0; i<text.length(); i++) {
+            if(text.charAt(i)>=97 && text.charAt(i)<=122) {
+                alphaChars++;
+            }
+        }
+
         //Create String array to hold the blocks
-        String[] blocks = new String[(int) Math.ceil(text.length() / (float)minBlockSize)];
+        String[] blocks = new String[(int) Math.ceil(alphaChars / (float)blockLength)];
+        Arrays.fill(blocks, "");
         if(blocks.length==0) {
             return new String[] {""};
         }
 
         //Load each String with blockSize characters until the end is reached
-        for (int i = 0; i < text.length(); i += minBlockSize) {
-            try {
-//                System.out.println("sub: " + i + ", " + (i+minBlockSize));
-                blocks[i / minBlockSize] = text.substring(i, i + minBlockSize);
-            } catch (StringIndexOutOfBoundsException e) {
-//                System.err.println(e.toString());
-                blocks[blocks.length - 1] = text.substring(i, text.length());
-                break;
+        int currentBlock = 0;
+        alphaChars = 0;
+        for (int i = 0; i < text.length(); i ++) {
+            blocks[currentBlock] += text.charAt(i);
+
+            //Add to alphabetic char total
+            if(text.charAt(i)>=97 && text.charAt(i)<=122) {
+                alphaChars++;
+            }
+
+            //Move to new block when current block is filled with alpha chars
+            if(alphaChars>=blockLength) {
+                alphaChars=0;
+                currentBlock++;
+            }
+            //Prevent array overruns
+            if(currentBlock >= blocks.length) {
+                currentBlock--;
             }
         }
 
-//        for(int i=0; i<blocks.length; i++) {
-//            System.out.println("\"" + blocks[i] + "\"");
-//        }
-//        System.out.println();
+        for(int i=0; i<blocks.length; i++) {
+            System.out.println("\"" + blocks[i] + "\"");
+        }
+        System.out.println();
 
         //Create another String array to hold the result and load it
-        String[] output = new String[blockCount];
+        String[] output = new String[threads];
         Arrays.fill(output, "");
 
         //Load each string
         int outputIndex = 0;
         int blocksRead = 0;
-        int blocksPerIndex = setBlocksPerIndex(blocks.length, blockCount);
-
+        int blocksPerIndex;
+        if(blocks[blocks.length-1].length()==0) {
+            blocksPerIndex = setBlocksPerIndex(blocks.length-1, threads);
+        }
+        else {
+            blocksPerIndex = setBlocksPerIndex(blocks.length, threads);
+        }
 
         //Put each string into the output
         for (int i = 0; i < blocks.length; i++) {

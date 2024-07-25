@@ -89,38 +89,38 @@ public class SetWorkerLoadsTest {
         StepperFunctions model = new StepperFunctions();
 
         //3 blocks of 8
-        String s = "123456789012345678901234";
+        String s = "abcdefghabcdefghabcdefgh";
         String[] result = model.setWorkerLoads(s, 3, 8);
-        String[] expected = new String[]{"12345678", "90123456", "78901234"};
+        String[] expected = new String[]{"abcdefgh", "abcdefgh", "abcdefgh"};
         printAssert(expected, result);
 
         //5 blocks of 8
-        s = "1234567890123456789012345678901234567890";
-        expected = new String[]{"12345678", "90123456", "78901234", "56789012", "34567890"};
+        s = "abcdefghabcdefghabcdefghabcdefghabcdefgh";
+        expected = new String[]{"abcdefgh", "abcdefgh", "abcdefgh", "abcdefgh", "abcdefgh"};
         result = model.setWorkerLoads(s, 5, 8);
         printAssert(expected, result);
 
         //1 block of 8
-        s = "12345678";
-        expected = new String[]{"12345678"};
+        s = "abcdefgh";
+        expected = new String[]{"abcdefgh"};
         result = model.setWorkerLoads(s, 1, 8);
         printAssert(expected, result);
 
         //6 blocks of 4
-        s = "123456789012345678901234";
-        expected = new String[]{"1234", "5678", "9012", "3456", "7890", "1234"};
+        s = "abcdabcdabcdabcdabcdabcd";
+        expected = new String[]{"abcd", "abcd", "abcd", "abcd", "abcd", "abcd"};
         result = model.setWorkerLoads(s, 6, 4);
         printAssert(expected, result);
 
         //2 blocks of 6
-        s = "123456789012";
-        expected = new String[]{"123456", "789012"};
+        s = "abcdefabcdef";
+        expected = new String[]{"abcdef", "abcdef"};
         result = model.setWorkerLoads(s, 2, 6);
         printAssert(expected, result);
 
         //4 blocks of 3
-        s = "123456789012";
-        expected = new String[]{"123", "456", "789", "012"};
+        s = "abcabcabcabc";
+        expected = new String[]{"abc", "abc", "abc", "abc"};
         result = model.setWorkerLoads(s, 4, 3);
         printAssert(expected, result);
     }
@@ -132,25 +132,25 @@ public class SetWorkerLoadsTest {
         StepperFunctions model = new StepperFunctions();
 
         //Block length is 8*2 (m=16)
-        String s = "12345678901234567890123456789012";
+        String s = "abcdabcdabcdabcdefghefghefghefgh";
         String[] result = model.setWorkerLoads(s, 2, 8);
-        String[] expected = new String[]{"1234567890123456", "7890123456789012"};
+        String[] expected = new String[]{"abcdabcdabcdabcd", "efghefghefghefgh"};
         printAssert(expected, result);
 
         //Block length is 8*2 (m=16)
-        s = "1234567812345678123456781234567812345678123456781234567812345678";
-        expected = new String[]{"1234567812345678", "1234567812345678", "1234567812345678", "1234567812345678"};
+        s = "aaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbccccccccccccccccdddddddddddddddd";
+        expected = new String[]{"aaaaaaaaaaaaaaaa", "bbbbbbbbbbbbbbbb", "cccccccccccccccc", "dddddddddddddddd"};
         result = model.setWorkerLoads(s, 4,8);
         printAssert(expected, result);
 
         //Block length is 5*3 (m=15)
-        s = "123451234512345123451234512345123451234512345";
-        expected = new String[]{"123451234512345", "123451234512345", "123451234512345"};
+        s = "abcdefghijklmnabcdefghijklmnabcdefghijklmn";
+        expected = new String[]{"abcdefghijklmn", "abcdefghijklmn", "abcdefghijklmn"};
         result = model.setWorkerLoads(s, 3, 5);
 
         //Block length is 6*2 (m=12)
-        s = "121212121212121212121212121212121212121212121212";
-        expected = new String[]{"121212121212", "121212121212", "121212121212", "121212121212"};
+        s = "abababababababababababababababababababababababab";
+        expected = new String[]{"abababababab", "abababababab", "abababababab", "abababababab"};
         result = model.setWorkerLoads(s, 4, 2);
     }
 
@@ -160,19 +160,19 @@ public class SetWorkerLoadsTest {
     void testBlockCount1() {
         StepperFunctions model = new StepperFunctions();
 
-        String s = "123456789012345678901234";
+        String s = "abcdefabcdefabcdefabcdef";
         String[] result = model.setWorkerLoads(s, 1, 8);
-        String[] expected = new String[]{"123456789012345678901234"};
+        String[] expected = new String[]{"abcdefabcdefabcdefabcdef"};
         printAssert(expected, result);
 
-        s = "12345678";
+        s = "abcdefgh";
         result = model.setWorkerLoads(s, 1, 2);
-        expected = new String[]{"12345678"};
+        expected = new String[]{"abcdefgh"};
         printAssert(expected, result);
 
-        s = "12345";
+        s = "abcde";
         result = model.setWorkerLoads(s, 1, 1);
-        expected = new String[]{"12345"};
+        expected = new String[]{"abcde"};
         printAssert(expected, result);
 
         s = "";
@@ -189,28 +189,28 @@ public class SetWorkerLoadsTest {
         StepperFunctions model = new StepperFunctions();
 
         //First index has enough room for one string of length minBlockSize
-        String s = "12345678901234567890";
+        String s = "aaaaaaaabbbbbbbbbbbb";
         String[] result = model.setWorkerLoads(s, 2, 8);
-        String[] expected = new String[]{"12345678", "901234567890"};
+        String[] expected = new String[]{"aaaaaaaa", "bbbbbbbbbbbb"};
         printAssert(expected, result);
 
         //First index has enough room for many strings of length minBlockSize
-        s = "1234567812345678123456781";
+        s = "aaaaaaaacccccccceeeeeeeee";
         result = model.setWorkerLoads(s, 2, 8);
-        expected = new String[]{"1234567812345678", "123456781"};
+        expected = new String[]{"aaaaaaaacccccccc", "eeeeeeeee"};
         printAssert(expected, result);
 
         //First index has enough room for many strings of length minBlockSize, minBlockSize is not 8
-        s = "1234561234561234561";
+        s = "aaaaaabbbbbbccccccd";
         result = model.setWorkerLoads(s, 2, 6);
-        expected = new String[]{"123456123456", "1234561"};
+        expected = new String[]{"aaaaaabbbbbb", "ccccccd"};
         printAssert(expected, result);
 
         //First index has enough room for many strings of length minBlockSize and second index has room for many length-minBlockSize strings
-        s = "123123123123123";
+        s = "aaabbbcccdddeee";
         result = model.setWorkerLoads(s, 2, 3);
-        expected = new String[]{"123123", "123123123"};
-        printAssert(expected, result); //Note: {"123123123", "123123"} also works for setWorkerLoads' intended purpose
+        expected = new String[]{"aaabbb", "cccdddeee"};
+        printAssert(expected, result);
     }
 
     @DisplayName("When blockCount is not the text length divided by minBlockSize and blockCount is more than 2," +
@@ -220,21 +220,21 @@ public class SetWorkerLoadsTest {
         StepperFunctions model = new StepperFunctions();
 
         //Remainder block should be longer than others
-        String s = "1234567890123456789012345678901234567890";
+        String s = "abcdefghabcdefghabcdefghabcdefghabcdefgh";
         String[] result = model.setWorkerLoads(s, 4, 8);
-        String[] expected = new String[]{"12345678", "90123456", "78901234", "5678901234567890"};
+        String[] expected = new String[]{"abcdefgh", "abcdefgh", "abcdefgh", "abcdefghabcdefgh"};
         printAssert(expected, result);
 
         //Remainder block should be longer than others. Each block is longer than the minimum block size
-        s = "12345678123456781234567812345678123456781234567812345";
+        s = "abcdefghabcdefghabcdefghabcdefghabcdefghabcdefghabcde";
         result = model.setWorkerLoads(s, 3, 8);
-        expected = new String[]{"1234567812345678", "1234567812345678", "123456781234567812345"};
+        expected = new String[]{"abcdefghabcdefgh", "abcdefghabcdefgh", "abcdefghabcdefghabcde"};
         printAssert(expected, result);
 
         //Remainder block should be shorter than others
-        s = "1234512345123451234512345123451234512345123";
+        s = "abcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabc";
         result = model.setWorkerLoads(s, 3, 5);
-        expected = new String[]{"123451234512345", "123451234512345", "1234512345123"};
+        expected = new String[]{"abcdeabcdeabcde", "abcdeabcdeabcde", "abcdeabcdeabc"};
         printAssert(expected, result);
     }
 
@@ -245,14 +245,14 @@ public class SetWorkerLoadsTest {
     void testBugfix() {
         StepperFunctions model = new StepperFunctions();
 
-        String s = "1234567890123456123456789012345612345678901234561234567890123456123456789012";
+        String s = "abcdefghijklmnopabcdefghijklmnopabcdefghijklmnopabcdefghijklmnopabcdefghijkl";
         String[] result = model.setWorkerLoads(s, 3, 16);
-        String[] expected = new String[]{"12345678901234561234567890123456", "12345678901234561234567890123456", "123456789012"};
+        String[] expected = new String[]{"abcdefghijklmnopabcdefghijklmnop", "abcdefghijklmnopabcdefghijklmnop", "abcdefghijkl"};
         printAssert(expected, result);
 
-        s = "12341234123412341234123412341234123";
+        s = "abcdabcdabcdabcdabcdabcdabcdabcdabc";
         result = model.setWorkerLoads(s, 5, 4);
-        expected = new String[]{"12341234", "12341234", "12341234", "12341234", "123"};
+        expected = new String[]{"abcdabcd", "abcdabcd", "abcdabcd", "abcdabcd", "abc"};
         printAssert(expected, result);
     }
 
@@ -261,34 +261,78 @@ public class SetWorkerLoadsTest {
     void testUnderflow() {
         StepperFunctions model = new StepperFunctions();
 
-        String s = "123456781234567812345678";
+        String s = "abcdefghabcdefghabcdefgh";
         String[] result = model.setWorkerLoads(s, 5, 8);
-        String[] expected = new String[]{"12345678", "12345678", "12345678", "", ""};
+        String[] expected = new String[]{"abcdefgh", "abcdefgh", "abcdefgh", "", ""};
         printAssert(expected, result);
 
-        s = "123456781";
+        s = "abcdefgha";
         result = model.setWorkerLoads(s, 3, 8);
-        expected = new String[]{"12345678", "1", ""};
+        expected = new String[]{"abcdefgh", "a", ""};
         printAssert(expected, result);
 
-        s = "12345678";
+        s = "abcdefgh";
         result = model.setWorkerLoads(s, 3, 8);
-        expected = new String[]{"12345678", "", ""};
+        expected = new String[]{"abcdefgh", "", ""};
         printAssert(expected, result);
 
-        s = "1234567";
+        s = "abcdefg";
         result = model.setWorkerLoads(s, 2, 8);
-        expected = new String[]{"1234567", ""};
+        expected = new String[]{"abcdefg", ""};
         printAssert(expected, result);
 
-        s = "123123123123123";
+        s = "abcabcabcabcabc";
         result = model.setWorkerLoads(s, 6, 3);
-        expected = new String[]{"123", "123", "123", "123", "123", ""};
+        expected = new String[]{"abc", "abc", "abc", "abc", "abc", ""};
         printAssert(expected, result);
 
-        s = "123456789012345678901234567890";
+        s = "abcdefghijabcdefghijabcdefghij";
         result = model.setWorkerLoads(s, 5, 30);
-        expected = new String[]{"123456789012345678901234567890", "", "", "", ""};
+        expected = new String[]{"abcdefghijabcdefghijabcdefghij", "", "", "", ""};
         printAssert(expected, result);
     }
+
+    @DisplayName("Each block should contain `blockLength` English lowercase ASCII characters. Each block should end in an " +
+            "English lowercase ASCII character")
+    @Test
+    void testIgnoreNonAlphas() {
+        //Non-alphanumeric characters
+        String s = "abcdefgh-abcdefgh-abcdefgh";
+        String[] result = StepperFunctions.setWorkerLoads(s, 3, 8);
+        String[] expected = new String[]{"abcdefgh", "-abcdefgh", "-abcdefgh"};
+        printAssert(expected, result);
+
+        //Numeric characters and uppercase letters
+        s = "aZbc0abcA1abc2abc9Z";
+        result = StepperFunctions.setWorkerLoads(s, 4, 3);
+        expected = new String[]{"aZbc", "0abc", "A1abc", "2abc9Z"};
+        printAssert(expected, result);
+
+        //Mix
+        s = "---abcd*e123f00gh[]ij===k";
+        result = StepperFunctions.setWorkerLoads(s, 3, 5);
+        expected = new String[]{"---abcd*e", "123f00gh[]ij", "===k"};
+        printAssert(expected, result);
+
+        //Number of non-alphabetic characters between letter groups are greater than blockLength
+        s = "=======================abcde-------------------fghi;;;;;;;;;;;;;;;;;jk";
+        result = StepperFunctions.setWorkerLoads(s, 3, 5);
+        expected = new String[]{"=======================abcde", "-------------------fghi;;;;;;;;;;;;;;;;;j", "k"};
+        printAssert(expected, result);
+
+        //Same as above, but tests block spillover
+        s = "===============abc-------------de000000000000000abcd;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;e" +
+                "            ab          cd        e[[[[[[[[[]]]]]]abc----------dea---";
+        result = StepperFunctions.setWorkerLoads(s, 3, 5);
+        expected = new String[]{"===============abc-------------de000000000000000abcd;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;e",
+                "            ab          cd        e[[[[[[[[[]]]]]]abc----------de", "a---"};
+        printAssert(expected, result);
+
+        //"Test Bugfix" but with non-alpha characters included
+        s = "abc-AAA-------  dabcdab   cdabcdabcdab   cdabcdabc     dabc ";
+        result = StepperFunctions.setWorkerLoads(s, 5, 4);
+        expected = new String[]{"abc-AAA-------  dabcd", "ab   cdabcd", "abcdab   cd", "abcdabc     d", "abc "};
+        printAssert(expected, result);
+    }
+
 }

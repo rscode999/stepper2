@@ -92,97 +92,30 @@ public class StringParserBoss extends SwingWorker<String,String> {
         String text = fields.text();
         String inputKey = fields.key();
 
-
-        /////////////////////////////////////////////////////////////////////////////////
-        //Format the input
-
-        //Do punctuation and diacritic transforms on the text, depending on punct mode selected
-        String[] textPieces = StepperFunctions.setWorkerLoads(text, fields.threadCount(), StepperFunctions.BLOCK_LENGTH);
-        String[] resultPieces = new String[textPieces.length];
-        String output="";
-
-        workerThreads = new StringParserPreparer[textPieces.length];
-
-        for (int i = 0; i < workerThreads.length; i++) {
-            workerThreads[i] = new StringParserPreparer(textPieces[i], punctMode);
-            workerThreads[i].execute();
-        }
-
-
-        try {
-            for (int i = 0; i < workerThreads.length; i++) {
-                resultPieces[i] = (String) workerThreads[i].get();
-            }
-        } catch (InterruptedException | ExecutionException e) {
-            return "";
-        }
-
-        for (int i = 0; i < workerThreads.length; i++) {
-            output += resultPieces[i];
-        }
-
-
-        //Put the formatted result back into the input text
-        text = output;
-
-
-        //Remove unnecessary memory space
-        output = null;
-        resultPieces = null;
-        workerThreads = null;
-        if(text == null) {
-            System.err.println("WARNING: the text is null");
-        }
-        System.gc();
-        app.setProgress(25);
-        System.out.println("done");
-
-
-        //Record positions of non-alphabetic characters
-        char[] nonAlphas = StepperFunctions.findNonAlphaPositions(text);
-        //        for(int i=0; i<nonAlphas.length; i++) {
-//            System.out.print((int)nonAlphas[i] + " ");
-//        }
-
-        //Remove non-alphabetic characters from the text
-        text = StepperFunctions.removeNonAlphas(text);
-
-
+        //Format text
+        text = StepperFunctions.removeDiacritics(text);
 
         //Format the key
         byte[][] key = StepperFunctions.createKeyBlocks(inputKey, StepperFunctions.BLOCK_COUNT, StepperFunctions.BLOCK_LENGTH);
-        //Put the key into the fields
+        //Load formatted key into app
         app.fields().setKey(StepperFunctions.arrToString(key));
 
-        //Remove unneeded memory
-        System.gc();
-        app.setProgress(50);
-        System.out.println("done");
-
-
-        /////////////////////////////////////////////////////////////////////////////////
-        //Process the input. text should contain only alphanumeric characters at this point
-
-
-        //Split the text into even blocks
-        textPieces = StepperFunctions.setWorkerLoads(text, fields.threadCount(), StepperFunctions.BLOCK_LENGTH);
-//        for (String s : textPieces) {
-//            System.out.println("\"" + s + "\" " + s.length());
-//        }
+        //Create loads
+        String[] textPieces = StepperFunctions.setWorkerLoads(text, app.fields().threadCount(), StepperFunctions.BLOCK_LENGTH);
 
         //Make the worker threads: one index for each piece of the text
         workerThreads = new StringParserWorker[textPieces.length];
-        int startingBlock = 0;
+        int startingIndex = 0;
         for (int i = 0; i < workerThreads.length; i++) {
-            workerThreads[i] = new StringParserWorker(textPieces[i], key, encrypting, Integer.toString(i), startingBlock);
+            workerThreads[i] = new StringParserWorker(textPieces[i], key, encrypting, punctMode, Integer.toString(i), startingIndex);
 
-            startingBlock += (textPieces[i].length() / StepperFunctions.BLOCK_LENGTH);
+            startingIndex += textPieces[i].length();
 //            System.out.println(textPieces[i].length());
         }
 
-//        for(SwingWorker w : workerThreads) {
-//            System.out.println((StringParserWorker)w);
-//        }
+        for(SwingWorker w : workerThreads) {
+            System.out.println((StringParserWorker)w);
+        }
 
 
         //Start each worker thread
@@ -191,7 +124,7 @@ public class StringParserBoss extends SwingWorker<String,String> {
         }
 
         //Make array to hold the result. Put the results from each thread into the result
-        resultPieces = new String[textPieces.length];
+        String[] resultPieces = new String[textPieces.length];
         Arrays.fill(resultPieces, "");
         try {
             for (int i = 0; i < workerThreads.length; i++) {
@@ -212,17 +145,10 @@ public class StringParserBoss extends SwingWorker<String,String> {
 //        }
 
         //Create the output
-        output = "";
+        String output = "";
         for (int i = 0; i < workerThreads.length; i++) {
             output += resultPieces[i];
         }
-
-        /////////////////////////////////////////////////////////////////////////////////
-        //Undo formatting from the output
-
-
-        //Put non-alphabetic characters into the output
-        output = StepperFunctions.recombineNonAlphas(output, nonAlphas, punctMode <= 1);
 
 
         //Remove unneeded memory
@@ -234,16 +160,18 @@ public class StringParserBoss extends SwingWorker<String,String> {
 
 
         //Do the numbers
-        if(encrypting) {
-            output = StepperFunctions.encryptNumbers(output, key);
-        }
-        else {
-            output = StepperFunctions.decryptNumbers(output, key);
-        }
+//        if(encrypting) {
+//            output = StepperFunctions.encryptNumbers(output, key);
+//        }
+//        else {
+//            output = StepperFunctions.decryptNumbers(output, key);
+//        }
 
 
         //Screen changing occurs in the StringParserDispatcher that created this Boss
         return output;
     }
+
+
 
 }
