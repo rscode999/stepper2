@@ -1,4 +1,3 @@
-import javax.imageio.plugins.jpeg.JPEGImageWriteParam;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.security.SecureRandom;
@@ -136,16 +135,16 @@ public class StepperFunctions {
     //GETTERS
 
     /**
-     * Returns index `index` of KEY_BLOCK_INCREMENTS. If `index` is not a valid index, throws an ArrayIndexOBException.<br><br>
+     * Returns index `index` of KEY_BLOCK_INCREMENTS. If `index` is not a valid index, throws an IndexOBException.<br><br>
      *
      * Needed to prevent other methods from modifying a constant array.
      * @param index index of KEY_BLOCK_INCREMENTS to access
      * @return value at given index
-     * @throws ArrayIndexOutOfBoundsException if `index` is not valid
+     * @throws IndexOutOfBoundsException if `index` is not valid
      */
     public static byte getKeyBlockIncrementIndex(int index) {
         if(index<0 || index>=KEY_BLOCK_INCREMENTS.length) {
-            throw new ArrayIndexOutOfBoundsException("Index must be on the interval [0," + (KEY_BLOCK_INCREMENTS.length-1) + "]");
+            throw new IndexOutOfBoundsException("Index must be on the interval [0," + (KEY_BLOCK_INCREMENTS.length-1) + "]");
         }
         return KEY_BLOCK_INCREMENTS[index];
     }
@@ -343,7 +342,7 @@ public class StepperFunctions {
         //////////////////////////
 
         //Configure positions
-        byte[] keyBlockBasePositions=initializeKeyBlockPositions(startBlock + text.length()/BLOCK_LENGTH);
+        byte[] keyBlockBasePositions= StepperFunctions.initializeKeyBlockPositions(startBlock + text.length()/BLOCK_LENGTH);
 //        System.out.println(text);
         String output="";
 
@@ -563,7 +562,7 @@ public class StepperFunctions {
         //////////////////////////
         //Start the process
 
-        byte[] keyBlockBasePositions = initializeKeyBlockPositions(startBlocks);
+        byte[] keyBlockBasePositions = StepperFunctions.initializeKeyBlockPositions(startBlocks);
         byte[] keyBlockReadPositions = new byte[BLOCK_COUNT];
         for(int s=0; s<keyBlockReadPositions.length; s++) {
             keyBlockReadPositions[s] = keyBlockBasePositions[s];
@@ -804,9 +803,38 @@ public class StepperFunctions {
      * Example: if `blocks` equals 4, the output would be the block positions just after encrypting 4 blocks.
      *
      * @param blocks number of blocks encrypted so far, non-negative
+     * @return key block positions after encrypting `blocks` blocks
+     */
+    public static byte[] initializeKeyBlockPositions(long blocks) {
+        assert blocks >= 0;
+
+        byte[] output = setKeyBlockPositions(blocks);
+
+        //Simulate moving through the remainder of the blocks
+        for(int b=0; b<blocks%BLOCK_LENGTH; b++) {
+            //Increment each index of the output
+            for(int i=0; i<output.length; i++) {
+                output[i] = (byte) ((output[i] + getKeyBlockIncrementIndex(i)) % BLOCK_LENGTH);
+            }
+        }
+
+        return output;
+    }
+
+
+    /**
+     * Returns an array of bytes representing the key block positions at the end of encryption,
+     * if the input was `blocks` blocks long<br><br>
+     *
+     * `blocks` should equal the number of blocks before the starting position.<br>
+     * Example: if `blocks` equals 4, the output would be the block positions just after encrypting 4 blocks.<br><br>
+     *
+     * Much slower than initializeKeyBlockPositions. Should be used only in tests.
+     *
+     * @param blocks number of blocks encrypted so far, non-negative
      * @return key block positions at the end of encryption
      */
-    private static byte[] initializeKeyBlockPositions(int blocks) {
+    public static byte[] initializeKeyBlockPositions_Testing(int blocks) {
         assert blocks>=0;
 
         byte[] output = new byte[BLOCK_COUNT];
@@ -993,7 +1021,7 @@ public class StepperFunctions {
         String a="" + input;
         a=a.toLowerCase();
         input=a.charAt(0);
-
+        a=null;
 
         //Not like the 'final' declaration will save the array indices from tampering,
         //but I hope that it increases speed a little.
@@ -1029,9 +1057,12 @@ public class StepperFunctions {
 
 
     /**
-     * Returns a lowercased version of the input without diacritics or accent marks.
+     * Returns a lowercased version of `input` without diacritics or accent marks.<br><br>
+     *
+     * Any character that is not transformed by the private helper method `removeDiacritics(char)` is not changed.
+     *
      * @param input text to remove diacritics from
-     * @return copy of input without diacritics
+     * @return copy of input without diacritics in lowercase letters
      */
     public static String removeDiacritics(String input) {
         String output="";
@@ -1206,6 +1237,8 @@ public class StepperFunctions {
 
     /**
      * Returns the key block positions for the given text length.<br><br>
+     *
+     * Important note: this method uses text length, not the number of blocks that are in the text.<br><br>
      *
      * Helper to initializeKeyBlockPositions.
      *

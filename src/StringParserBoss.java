@@ -116,13 +116,14 @@ public class StringParserBoss extends SwingWorker<String,String> {
             startingBlock += charCounts[0] / StepperFunctions.BLOCK_LENGTH;
             numberCount += charCounts[1];
         }
+        textPieces = null;
 
         for(StringParserWorker w : workerThreads) {
             System.out.println(w);
         }
 
         System.gc();
-        app.setLoadingStatusText("Executing...");
+        app.setLoadingStatusText("Finalizing...");
 
         //Start each worker thread
         for (int i = 0; i < workerThreads.length; i++) {
@@ -130,11 +131,11 @@ public class StringParserBoss extends SwingWorker<String,String> {
         }
 
         //Make array to hold the result. Put the results from each thread into the result
-        String[] resultPieces = new String[textPieces.length];
-        Arrays.fill(resultPieces, "");
+        textPieces = new String[workerThreads.length];
+        Arrays.fill(textPieces, "");
         try {
             for (int i = 0; i < workerThreads.length; i++) {
-                resultPieces[i] = workerThreads[i].get();
+                textPieces[i] = workerThreads[i].get();
             }
         }
         catch (InterruptedException | ExecutionException e) {
@@ -145,23 +146,21 @@ public class StringParserBoss extends SwingWorker<String,String> {
             System.out.println("Do in Background interrupted- " + e.getCause());
             return "";
         }
-//        for (String s : result) {
-//            System.out.println("\"" + s + "\"");
-//        }
+        for (String s : textPieces) {
+            System.out.println("\"" + s + "\"");
+        }
 
+        workerThreads = null;
         System.gc();
-        app.setLoadingStatusText("Finalizing...");
 
         //Create the output
         String output = "";
-        for (int i = 0; i < workerThreads.length; i++) {
-            output += resultPieces[i];
+        for (int i = 0; i < textPieces.length; i++) {
+            output += textPieces[i];
         }
 
 
-        //Remove unneeded memory
-        workerThreads = null;
-        resultPieces = null;
+        textPieces = null;
 
         //Screen changing occurs in the StringParserDispatcher that created this Boss
         return output;
