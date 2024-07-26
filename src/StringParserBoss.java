@@ -108,10 +108,13 @@ public class StringParserBoss extends SwingWorker<String,String> {
         //Make the worker threads: one index for each piece of the text
         workerThreads = new StringParserWorker[textPieces.length];
         int startingBlock = 0;
+        int numberCount = 0;
         for (int i = 0; i < workerThreads.length; i++) {
-            workerThreads[i] = new StringParserWorker(textPieces[i], key, encrypting, punctMode, Integer.toString(i), startingBlock);
+            workerThreads[i] = new StringParserWorker(textPieces[i], key, encrypting, punctMode, startingBlock, numberCount, Integer.toString(i));
 
-            startingBlock += StepperFunctions.countAlphaChars(textPieces[i]) / StepperFunctions.BLOCK_LENGTH;
+            int[] charCounts = StepperFunctions.countAlphaAndNumericChars(textPieces[i]);
+            startingBlock += charCounts[0] / StepperFunctions.BLOCK_LENGTH;
+            numberCount += charCounts[1];
         }
 
         for(StringParserWorker w : workerThreads) {
@@ -125,8 +128,6 @@ public class StringParserBoss extends SwingWorker<String,String> {
         for (int i = 0; i < workerThreads.length; i++) {
             workerThreads[i].execute();
         }
-
-
 
         //Make array to hold the result. Put the results from each thread into the result
         String[] resultPieces = new String[textPieces.length];
@@ -149,6 +150,7 @@ public class StringParserBoss extends SwingWorker<String,String> {
 //        }
 
         System.gc();
+        app.setLoadingStatusText("Finalizing...");
 
         //Create the output
         String output = "";
@@ -156,18 +158,6 @@ public class StringParserBoss extends SwingWorker<String,String> {
             output += resultPieces[i];
         }
 
-
-        System.gc();
-        app.setLoadingStatusText("Finalizing...");
-
-
-        //Do the numbers
-        if(encrypting) {
-            output = StepperFunctions.encryptNumbers(output, key);
-        }
-        else {
-            output = StepperFunctions.decryptNumbers(output, key);
-        }
 
         //Remove unneeded memory
         workerThreads = null;

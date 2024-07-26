@@ -2,7 +2,10 @@ import javax.swing.*;
 import java.util.Arrays;
 
 /**
- * Does a small portion of a StringParserBoss's work. Cannot have a field that can hold a StepperApp.
+ * Does a small portion of a StringParserBoss's work. Cannot have a field that can hold a StepperApp.<br><br>
+ *
+ * The worker takes the position of the next block and amount of numbers processed so far to determine which piece of the
+ * Boss's work to do.
  */
 public class StringParserWorker extends SwingWorker<String,String> {
 
@@ -14,7 +17,7 @@ public class StringParserWorker extends SwingWorker<String,String> {
     /**
      * The key to process the input with. Can't be null
      */
-    private byte[][] key;
+    private final byte[][] key;
 
     /**
      * True if this worker is encrypting its text, false otherwise
@@ -27,15 +30,20 @@ public class StringParserWorker extends SwingWorker<String,String> {
     final private byte punctMode;
 
     /**
+     * The block number in the Boss's input string. Can't be negative
+     */
+    final private int startBlock;
+
+    /**
+     * The amount of numbers processed so far in the Boss's input string. Can't be negative
+     */
+    final private int numbersPreviouslyEncrypted;
+
+    /**
      * The name of the Worker (mainly for debugging purposes). Can't be null
      */
     final private String name;
 
-
-    /**
-     * The block number in the Boss's input string. Can't be negative
-     */
-    final private int startBlock;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -45,19 +53,21 @@ public class StringParserWorker extends SwingWorker<String,String> {
     /**
      * Creates a StringParserWorker and loads its fields
      * @param givenInput the substring it should process. Can't be null
-     * @param givenKey the key to process the substring with. Can't be null
+     * @param givenKey the key to process the substring with. Can't be null. No indices can be null
      * @param encrypting true if this Worker should encrypt its text, false otherwise
      * @param punctMode 0 if including punctuation, 1 if excluding spaces, 2 if alphabetic characters only
-     * @param name the name of the Worker
      * @param startBlock where to start processing the input at. Must be at least 0
+     * @param numbersPreviouslyEncrypted amount of numbers encrypted so far. Cannot be negative
+     * @param name the name of the Worker
+
      */
     public StringParserWorker(String givenInput, byte[][] givenKey, boolean encrypting,
-                              byte punctMode, String name, int startBlock) {
+                              byte punctMode, int startBlock, int numbersPreviouslyEncrypted, String name) {
         assert givenInput!=null;
         assert givenKey!=null;
         assert punctMode>=0 && punctMode<=2;
-        assert name!=null;
         assert startBlock>=0;
+        assert numbersPreviouslyEncrypted>=0;
 
         //Make deep copy of the input
         this.input=givenInput;
@@ -74,6 +84,7 @@ public class StringParserWorker extends SwingWorker<String,String> {
         this.encrypting=encrypting;
         this.punctMode=punctMode;
         this.name=name;
+        this.numbersPreviouslyEncrypted=numbersPreviouslyEncrypted;
         this.startBlock=startBlock;
     }
 
@@ -90,7 +101,8 @@ public class StringParserWorker extends SwingWorker<String,String> {
      */
     @Override
     public String toString() {
-        return "Worker \"" + name + "\", input(" + input.length() + ")=\"" + input + "\", startblock=" + startBlock;
+        return "Worker \"" + name + "\", input(" + input.length() + ")=\"" + input + "\", startblock=" + startBlock + ", numberstart="
+                + numbersPreviouslyEncrypted;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -125,7 +137,13 @@ public class StringParserWorker extends SwingWorker<String,String> {
         //Reinsert punctuation
         output = StepperFunctions.recombineNonAlphas(output, nonAlphas, punctMode<=1);
 
-        //Numbers are done by the Boss
+        //Do the numbers
+        if(encrypting) {
+            output = StepperFunctions.encryptNumbers(output, key, numbersPreviouslyEncrypted);
+        }
+        else {
+            output = StepperFunctions.decryptNumbers(output, key, numbersPreviouslyEncrypted);
+        }
 
         return output;
     }

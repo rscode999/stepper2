@@ -190,43 +190,23 @@ public class StepperFunctions {
         return output;
     }
 
-
     /**
-     * Returns the number of lowercase English ASCII characters in `input`.
+     * Returns the amount of lowercase English ASCII characters in index 0 and the amount of numeric characters in index 1
+     * of the function's output.
      *
-     * @param input String to count alphabetic characters in
-     * @return number of alphabetic characters
+     * @param input String to count alphabetic and numeric characters in
+     * @return {number of alphabetic chars, number of numeric chars}
      */
-    public static int countAlphaChars(String input) {
-        int output = 0;
+    public static int[] countAlphaAndNumericChars(String input) {
+        int[] output = new int[] {0,0};
 
         for(int i=0; i<input.length(); i++) {
             if((int)input.charAt(i)>=97 && (int)input.charAt(i)<=122) {
-                output++;
-            }
-        }
-
-        return output;
-    }
-
-    /**
-     * Returns the number of lowercase English ASCII characters in `input`. If more than `maxChars` characters have been counted,
-     * stop counting and return.
-     *
-     * @param input String to count alphabetic characters in
-     * @param maxChars highest possible value to return
-     * @return number of alphabetic characters
-     */
-    public static int countAlphaChars(String input, int maxChars) {
-        int output = 0;
-
-        for(int i=0; i<input.length(); i++) {
-            if(output > maxChars) {
-                return output;
+                output[0]++;
             }
 
-            if((int)input.charAt(i)>=97 && (int)input.charAt(i)<=122) {
-                output++;
+            if((int)input.charAt(i)>=48 && (int)input.charAt(i)<=57) {
+                output[1]++;
             }
         }
 
@@ -469,55 +449,63 @@ public class StepperFunctions {
      * Returns a copy of input, but with numbers decrypted using inputKey.<br><br>
      *
      * Any non-number is unchanged in the output.
-     * @param input the input text
-     * @param inputKey key to decrypt with
+     * @param input the input text segment
+     * @param key key to decrypt with, all indices must be on the interval [0,25]
+     * @param numbersPreviouslyDecrypted how many numbers were decrypted prior to this text segment
      * @return input, but with numbers decrypted
      */
-    public static String decryptNumbers(String input, byte[][] inputKey) {
-        if(input==null || inputKey==null) {
-            throw new AssertionError("Neither input can be null");
+    public static String decryptNumbers(String input, byte[][] key, int numbersPreviouslyDecrypted) {
+        if(input==null || key==null) {
+            throw new AssertionError("Input and key cannot be null");
+        }
+        if(numbersPreviouslyDecrypted < 0) {
+            throw new AssertionError("Numbers decrypted cannot be negative");
+        }
+
+        String flattenedKey = "";
+        for(int a=0; a<key.length; a++) {
+            if(key[a]==null) {
+                throw new AssertionError("Key indices cannot be null");
+            }
+            for(int i=0; i<key[a].length; i++) {
+                if(key[a][i]<0 || key[a][i]>25) {
+                    throw new AssertionError("Key indices must be on the interval [0,25]");
+                }
+                flattenedKey += (char)key[a][i];
+            }
         }
 
         String output="";
 
-        int currentChar;
-        int inputKeyRow=0;
-        int inputKeyCol=0;
+        int currentInputChar;
+        int keyIndex = numbersPreviouslyDecrypted % flattenedKey.length();
 
         for(int i=0; i<input.length(); i++) {
-            currentChar=(int)input.charAt(i);
-
-            assert inputKey[inputKeyRow][inputKeyCol]>=0
-                    && inputKey[inputKeyRow][inputKeyCol]<=25;
+            currentInputChar=(int)input.charAt(i);
 
             //If current char is a number, decrypt it before adding it to the output
-            if(currentChar>=48 && currentChar<=57) {
-                currentChar -= 48;
+            if(currentInputChar>=48 && currentInputChar<=57) {
+                currentInputChar -= 48;
 
-                currentChar = (currentChar - inputKey[inputKeyRow][inputKeyCol]) % 10;
-                if(currentChar < 0) {
-                    currentChar += 10;
+                currentInputChar = (currentInputChar - (int)flattenedKey.charAt(keyIndex)) % 10;
+                if(currentInputChar < 0) {
+                    currentInputChar += 10;
                 }
-                currentChar = (currentChar - inputKey[inputKeyRow][inputKeyCol]) % 10;
-                if(currentChar < 0) {
-                    currentChar += 10;
+                currentInputChar = (currentInputChar - (int)flattenedKey.charAt(keyIndex)) % 10;
+                if(currentInputChar < 0) {
+                    currentInputChar += 10;
                 }
 
-                currentChar += 48;
+                currentInputChar += 48;
 
                 //Move to the next index in the key, or go back to the beginning if it overflowed
-                inputKeyCol++;
-                if(inputKeyCol >= inputKey[inputKeyRow].length) {
-                    inputKeyCol=0;
-                    inputKeyRow++;
-                }
-                if(inputKeyRow >= inputKey.length) {
-                    inputKeyCol=0;
-                    inputKeyRow=0;
+                keyIndex++;
+                if(keyIndex >= flattenedKey.length()) {
+                    keyIndex = 0;
                 }
             }
 
-            output += (char)currentChar;
+            output += (char)currentInputChar;
         }
 
         return output;
@@ -653,42 +641,47 @@ public class StepperFunctions {
      * Returns a copy of input, but with numbers encrypted using inputKey.<br><br>
      *
      * Any non-number is unchanged in the output.
-     * @param input the input text
-     * @param inputKey key to encrypt with
+     * @param input the input text segment
+     * @param key key to encrypt with, all indices must be on the interval [0,25]
+     * @param numbersPreviouslyEncrypted how many numbers were encrypted prior to this text segment
      * @return input, but with numbers encrypted
      */
-    public static String encryptNumbers(String input, byte[][] inputKey) {
-        if(input==null || inputKey==null) {
+    public static String encryptNumbers(String input, byte[][] key, int numbersPreviouslyEncrypted) {
+        if(input==null || key==null) {
             throw new AssertionError("Neither input can be null");
+        }
+
+        String flattenedKey = "";
+        for(int a=0; a<key.length; a++) {
+            if(key[a]==null) {
+                throw new AssertionError("Key indices cannot be null");
+            }
+            for(int i=0; i<key[a].length; i++) {
+                if(key[a][i]<0 || key[a][i]>25) {
+                    throw new AssertionError("Key indices must be on the interval [0,25]");
+                }
+                flattenedKey += (char)key[a][i];
+            }
         }
 
         String output="";
 
         int currentChar;
-        int inputKeyRow=0;
-        int inputKeyCol=0;
+        int keyIndex = numbersPreviouslyEncrypted % flattenedKey.length();
 
         for(int i=0; i<input.length(); i++) {
             currentChar=(int)input.charAt(i);
 
-            assert inputKey[inputKeyRow][inputKeyCol]>=0
-                    && inputKey[inputKeyRow][inputKeyCol]<=25;
-
             //If current char is a number, encrypt it before adding it to the output
             if(currentChar>=48 && currentChar<=57) {
                 currentChar -= 48;
-                currentChar = (currentChar + (inputKey[inputKeyRow][inputKeyCol])) % 10;
-                currentChar = (currentChar + (inputKey[inputKeyRow][inputKeyCol])) % 10;
+                currentChar = (currentChar + (flattenedKey.charAt(keyIndex))) % 10;
+                currentChar = (currentChar + (flattenedKey.charAt(keyIndex))) % 10;
                 currentChar += 48;
 
-                inputKeyCol++;
-                if(inputKeyCol >= inputKey[inputKeyRow].length) {
-                    inputKeyCol=0;
-                    inputKeyRow++;
-                }
-                if(inputKeyRow >= inputKey.length) {
-                    inputKeyCol=0;
-                    inputKeyRow=0;
+                keyIndex++;
+                if(keyIndex >= flattenedKey.length()) {
+                    keyIndex=0;
                 }
             }
 
@@ -977,10 +970,10 @@ public class StepperFunctions {
 
         //all characters from [0..nonAlphasIndex) in text should be already processed
         while(nonAlphasIndex < nonAlphas.length) {
-            if(nonAlphas[nonAlphasIndex]>0 && (reinsertingPunctuation)) {
+            if((nonAlphas[nonAlphasIndex]>0 && reinsertingPunctuation)
+                    || (nonAlphas[nonAlphasIndex])>=48 && nonAlphas[nonAlphasIndex]<=57) {
                 output=output + nonAlphas[nonAlphasIndex];
             }
-
             nonAlphasIndex++;
         }
 
@@ -1283,7 +1276,7 @@ public class StepperFunctions {
      * -Note: The final character of each block (excluding the last block) should end in an alphabetic character.<br><br>
      *
      * The test cases may fail. If so, manually check if the thread loads are even in each failed test.
-     * Even distribution and piece length being a multiple of `threads` are the most important aspects of the output.
+     * Even distribution and piece length being a multiple of `threads` are the most important aspects of the output.<br>
      *
      * @param text the text to split
      * @param threads how many pieces `text` should be split into
