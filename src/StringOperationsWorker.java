@@ -1,5 +1,4 @@
 import javax.swing.*;
-import java.util.Arrays;
 
 /**
  * Does a small portion of a StringParserBoss's work. Cannot have a field that can hold a StepperApp.<br><br>
@@ -7,7 +6,7 @@ import java.util.Arrays;
  * The worker takes the position of the next block and amount of numbers processed so far to determine which piece of the
  * Boss's work to do.
  */
-public class StringParserWorker extends SwingWorker<String,String> {
+public class StringOperationsWorker extends SwingWorker<String,String> {
 
     /**
      * The String to process. Can't be null
@@ -50,59 +49,55 @@ public class StringParserWorker extends SwingWorker<String,String> {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
     /**
-     * Creates a StringParserWorker and loads its fields
-     * @param givenInput the substring it should process. Can't be null
-     * @param givenKey the key to process the substring with. Can't be null. No indices can be null
+     * Creates a StringOperationsWorker and loads its fields
+     * @param input the substring it should process. Can't be null
+     * @param key the key to process the substring with. Can't be null. No subarrays can be null. All indices must be on [0,25]
      * @param encrypting true if this Worker should encrypt its text, false otherwise
      * @param punctMode 0 if including punctuation, 1 if excluding spaces, 2 if alphabetic characters only
      * @param startBlock where to start processing the input at. Must be at least 0
      * @param numbersPreviouslyEncrypted amount of numbers encrypted so far. Cannot be negative
      * @param name the name of the Worker
-
      */
-    public StringParserWorker(String givenInput, byte[][] givenKey, boolean encrypting,
-                              byte punctMode, int startBlock, int numbersPreviouslyEncrypted, String name) {
-        assert givenInput!=null;
-        assert givenKey!=null;
+    public StringOperationsWorker(String input, byte[][] key, boolean encrypting,
+                                  byte punctMode, int startBlock, int numbersPreviouslyEncrypted, String name) {
+        assert input!=null;
+        assert key!=null;
         assert punctMode>=0 && punctMode<=2;
         assert startBlock>=0;
         assert numbersPreviouslyEncrypted>=0;
 
-        //Make deep copy of the input
-        this.input=givenInput;
+        this.input=input;
 
         //Make a deep copy of the key
-        this.key = new byte[givenKey.length][givenKey[0].length];
-        for(int a=0; a<givenKey.length; a++) {
-            assert givenKey[a] != null;
-            for(int i=0; i<givenKey[0].length; i++) {
-                this.key[a][i] = givenKey[a][i];
+        this.key = new byte[key.length][key[0].length];
+        for(int a=0; a<key.length; a++) {
+            assert key[a] != null;
+            for(int i=0; i<key[0].length; i++) {
+                assert key[a][i]>=0 && key[a][i]<=25;
+                this.key[a][i] = key[a][i];
             }
         }
 
         this.encrypting=encrypting;
         this.punctMode=punctMode;
-        this.name=name;
-        this.numbersPreviouslyEncrypted=numbersPreviouslyEncrypted;
         this.startBlock=startBlock;
+        this.numbersPreviouslyEncrypted=numbersPreviouslyEncrypted;
+        this.name=name;
     }
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * Returns a String containing representations of the Worker's fields.<br><br>
-     *
-     * Mimics the 'repr' method in a Python class.<br>
-     * Mostly a debugging tool.
-     *
+     * Returns a String containing representations of the Worker's fields.
      * @return representation of fields
      */
     @Override
     public String toString() {
-        return "Worker \"" + name + "\", input(" + input.length() + ")=\"" + input + "\", startblock=" + startBlock + ", numberstart="
-                + numbersPreviouslyEncrypted;
+        return "Operations Worker \"" + name + "\", startblock=" + startBlock + ", numberstart="
+                + numbersPreviouslyEncrypted + ", input=\"" + input + "\"";
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

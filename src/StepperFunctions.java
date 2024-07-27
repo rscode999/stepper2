@@ -189,9 +189,11 @@ public class StepperFunctions {
         return output;
     }
 
+
     /**
-     * Returns the amount of lowercase English ASCII characters in index 0 and the amount of numeric characters in index 1
-     * of the function's output.
+     * Returns the amount of lowercase English ASCII characters in index 0 and the amount of numeric characters in index 1.<br><br>
+     *
+     * Returns an array to prevent looping over the same string twice.
      *
      * @param input String to count alphabetic and numeric characters in
      * @return {number of alphabetic chars, number of numeric chars}

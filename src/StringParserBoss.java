@@ -11,7 +11,7 @@ public class StringParserBoss extends SwingWorker<String,String> {
     /**
      * The worker threads that this Boss employs. The array's length may vary depending on the number of threads used
      */
-    private StringParserWorker[] workerThreads;
+    private SwingWorker<String,String>[] workerThreads;
 
 
     /**
@@ -82,16 +82,48 @@ public class StringParserBoss extends SwingWorker<String,String> {
      */
     @Override
     protected String doInBackground() throws Exception {
-        //Switch the screen
-        app.setScreen("PROCESSING");
 
         //Take the input
         StepperAppFields fields = app.fields();
         String text = fields.text();
         String inputKey = fields.key();
 
-        //Format text
-        text = StepperFunctions.removeDiacritics(text);
+
+        //Remove diacritics from the text. Multithreaded because this is the most computationally intensive task
+
+        //Create text pieces
+        String[] textPieces = StepperFunctions.setWorkerLoads(text,
+                app.fields().threadCount(),
+                StepperFunctions.BLOCK_LENGTH);
+
+        //Create worker threads and assign them a workload
+        workerThreads = new StringDiacriticsWorker[textPieces.length];
+        for(int i=0; i<workerThreads.length; i++) {
+            workerThreads[i] = new StringDiacriticsWorker(textPieces[i], Integer.toString(i));
+        }
+
+        //Execute workers
+        for(int i=0; i<workerThreads.length; i++) {
+            workerThreads[i].execute();
+        }
+
+        //Take output from each worker thread
+        textPieces = new String[workerThreads.length];
+        for(int i=0; i<workerThreads.length; i++) {
+            textPieces[i] = workerThreads[i].get();
+        }
+
+        //Reload the text with the results
+        text = "";
+        for(int i=0; i<workerThreads.length; i++) {
+            text += textPieces[i];
+        }
+
+
+        /////////////////////////////////////////////////////
+        //OPERATION
+
+        app.setLoadingStatusText("Executing...");
 
         //Format the key
         byte[][] key = StepperFunctions.createKeyBlocks(inputKey, StepperFunctions.BLOCK_COUNT, StepperFunctions.BLOCK_LENGTH);
@@ -99,18 +131,18 @@ public class StringParserBoss extends SwingWorker<String,String> {
         app.fields().setKey(StepperFunctions.arrToString(key));
 
 
-
         //Create loads
-        String[] textPieces = StepperFunctions.setWorkerLoads(text,
+        textPieces = StepperFunctions.setWorkerLoads(text,
                 app.fields().threadCount(),
                 StepperFunctions.BLOCK_LENGTH);
 
         //Make the worker threads: one index for each piece of the text
-        workerThreads = new StringParserWorker[textPieces.length];
+        workerThreads = new StringOperationsWorker[textPieces.length];
         int startingBlock = 0;
         int numberCount = 0;
         for (int i = 0; i < workerThreads.length; i++) {
-            workerThreads[i] = new StringParserWorker(textPieces[i], key, encrypting, punctMode, startingBlock, numberCount, Integer.toString(i));
+            workerThreads[i] = new StringOperationsWorker(textPieces[i], key,
+                    encrypting, punctMode, startingBlock, numberCount, Integer.toString(i));
 
             int[] charCounts = StepperFunctions.countAlphaAndNumericChars(textPieces[i]);
             startingBlock += charCounts[0] / StepperFunctions.BLOCK_LENGTH;
@@ -118,12 +150,11 @@ public class StringParserBoss extends SwingWorker<String,String> {
         }
         textPieces = null;
 
-        for(StringParserWorker w : workerThreads) {
-            System.out.println(w);
-        }
+//        for(SwingWorker w : workerThreads) {
+//            System.out.println(w);
+//        }
 
         System.gc();
-        app.setLoadingStatusText("Finalizing...");
 
         //Start each worker thread
         for (int i = 0; i < workerThreads.length; i++) {
@@ -154,16 +185,16 @@ public class StringParserBoss extends SwingWorker<String,String> {
         System.gc();
 
         //Create the output
-        String output = "";
+        text = "";
         for (int i = 0; i < textPieces.length; i++) {
-            output += textPieces[i];
+            text += textPieces[i];
         }
 
 
         textPieces = null;
 
         //Screen changing occurs in the StringParserDispatcher that created this Boss
-        return output;
+        return text;
     }
 
 

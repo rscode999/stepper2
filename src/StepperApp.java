@@ -264,7 +264,6 @@ public class StepperApp extends JFrame {
             }
         }
 
-
         //Configure the CardLayout
         screens = new CardLayout();
         contentPane = getContentPane();
@@ -795,6 +794,11 @@ public class StepperApp extends JFrame {
         enterButton.setFont(MEDIUM_FONT);
         enterButton.setPreferredSize(new Dimension((int) (APP_DIMENSIONS.width/8.0), (int) (APP_DIMENSIONS.height/16.0)));
         enterButton.addActionListener(event -> {
+            //Reset the progress
+            setLoadingStatusText("Loading input...");
+
+            //Switch the screen
+            setScreen("PROCESSING");
 
             //Take input from file, if selected
             if(inputModeSelector.getSelectedItem().equals(INPUT_SELECTION_OPTIONS[2])) {
@@ -845,9 +849,6 @@ public class StepperApp extends JFrame {
             if(!encrypting) {
                 punctMode=0;
             }
-
-            //Reset the progress
-            setLoadingStatusText("Loading input...");
 
 
             //Set number of threads
