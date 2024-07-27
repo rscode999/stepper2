@@ -7,8 +7,8 @@ import java.util.concurrent.ExecutionException;
 /**
  * Created by a StringParserDispatcher to process the Dispatcher's input.<br><br>
  *
- * Dispatchers and Workers share error messages through the App's key field, accessed with {app}.fields().key() and set
- * with {app}.fields().setKey(). Error messages always start with "~~~".
+ * Dispatchers and Workers share exception messages through the App's key field, accessed with {app}.fields().key() and set
+ * with {app}.fields().setKey(). Exception messages always start with "~~~".
  */
 public class StringParserBoss extends SwingWorker<String,String> {
 
@@ -87,11 +87,12 @@ public class StringParserBoss extends SwingWorker<String,String> {
 
     /**
      * Returns the result of the Boss's processing.
-     * Also sets the App's output when finished and periodically updates the App's progress bar.<br><br>
+     * Also sets the App's output when finished and periodically updates the App's progress text.<br><br>
      *
-     * By the end of this method, the App's fields should be updated with the results.<br>
-     * If this method throws an exception, the method will load the App's key field with an error message, which will
-     * be interpreted by the Dispatcher that uses this Boss. Error messages always start with "~~~".<br>
+     * By the end of this method, the App's fields (i.e. app.fields()) should be updated with the results.<br>
+     * If this method throws an exception, excluding exceptions thrown when interrupted, the method will
+     * load the App's key field with an error message, which will be interpreted by the Dispatcher that uses this Boss.
+     * Error messages always start with "~~~".<br><br>
      *
      * WARNING: Any exceptions thrown in this method are SILENT. They will not stop the program and produce no error messages.
      *
@@ -99,10 +100,11 @@ public class StringParserBoss extends SwingWorker<String,String> {
      */
     @Override
     protected String doInBackground() throws Exception {
+
         //Switch the screen
         app.setScreen("PROCESSING");
 
-        //Take the input
+        //Take the input, depending on if loading from text or file
         try {
             if (filepath.equals(StepperFunctions.TEXT_LOAD_SIGNAL)) {
                 app.fields().setText(app.topInputValue());
@@ -121,6 +123,7 @@ public class StringParserBoss extends SwingWorker<String,String> {
         String inputKey = app.fields().key();
 
 
+        app.setLoadingStatusText("Formatting...");
         /////////////////////////////////////////////////////
         //REMOVE DIACRITICS USING ALL THREADS
 
@@ -135,15 +138,23 @@ public class StringParserBoss extends SwingWorker<String,String> {
             workerThreads[i] = new StringDiacriticsWorker(textPieces[i], Integer.toString(i));
         }
 
-        //Execute workers
-        for(int i=0; i<workerThreads.length; i++) {
-            workerThreads[i].execute();
-        }
 
         //Take output from each worker thread
         textPieces = new String[workerThreads.length];
-        for (int i = 0; i < workerThreads.length; i++) {
-            textPieces[i] = workerThreads[i].get();
+        try {
+            //Execute workers
+            for(int i=0; i<workerThreads.length; i++) {
+                workerThreads[i].execute();
+            }
+            for (int i = 0; i < workerThreads.length; i++) {
+                textPieces[i] = workerThreads[i].get();
+            }
+        }
+        catch (ExecutionException | InterruptedException e) {
+            for (int i = 0; i < workerThreads.length; i++) {
+                workerThreads[i].cancel(true);
+            }
+            return "";
         }
 
         //Reload the text with the results
@@ -190,16 +201,25 @@ public class StringParserBoss extends SwingWorker<String,String> {
 
         System.gc();
 
-        //Start each worker thread
-        for (int i = 0; i < workerThreads.length; i++) {
-            workerThreads[i].execute();
-        }
 
         //Make array to hold the result. Put the results from each thread into the result
         textPieces = new String[workerThreads.length];
         Arrays.fill(textPieces, "");
-        for (int i = 0; i < workerThreads.length; i++) {
-            textPieces[i] = workerThreads[i].get();
+        try {
+            //Start each worker thread
+            for (int i = 0; i < workerThreads.length; i++) {
+                workerThreads[i].execute();
+            }
+
+            for (int i = 0; i < workerThreads.length; i++) {
+                textPieces[i] = workerThreads[i].get();
+            }
+        }
+        catch (ExecutionException | InterruptedException e) {
+            for (int i = 0; i < workerThreads.length; i++) {
+                workerThreads[i].cancel(true);
+            }
+            return "";
         }
 
 

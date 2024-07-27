@@ -26,24 +26,28 @@ public class StepperFunctions {
      */
     final public static int BLOCK_LENGTH = 19;
 
+
     /**
      * Name of the default text input file. Must end in ".txt".
      */
     final public static String DEFAULT_INPUT_FILE = "input.txt";
-
-    final public static String TEXT_LOAD_SIGNAL = "~";
 
     /**
      * Amount to rotate each block. Length must equal BLOCK_COUNT. Must be private. Indices are accessed through a getter method.
      */
     final private static byte[] KEY_BLOCK_INCREMENTS = {1,2,3,5,7,11,13};
 
-
     /**
      * Maximum number of threads that can be used for a process. Must be at least 1
      */
     final public static int MAX_THREADS = 999;
 
+    /**
+     * When given to a StringParserBoss as a filename, this load signal tells the Boss to take its input from a text field
+     * instead of from a file.<br><br>
+     * Cannot be the empty string because empty strings trigger loading from the default input file.
+     */
+    final public static String TEXT_LOAD_SIGNAL = "~~~";
 
     /**
      * Array of valid passwords, used in the login method. Can't be null. None of its indices can be null<br><br>

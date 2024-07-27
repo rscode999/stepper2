@@ -803,14 +803,16 @@ public class StepperApp extends JFrame {
         enterButton.setFont(MEDIUM_FONT);
         enterButton.setPreferredSize(new Dimension((int) (APP_DIMENSIONS.width/8.0), (int) (APP_DIMENSIONS.height/16.0)));
         enterButton.addActionListener(event -> {
-            //Reset the progress
-            setLoadingStatusText("Loading input...");
 
-
-            //Set input preferences
+            //Set input preferences. Text loading is done in the Boss thread
             String filename = StepperFunctions.TEXT_LOAD_SIGNAL;
             if(inputModeSelector.getSelectedItem().equals(INPUT_SELECTION_OPTIONS[2])) {
                 filename = textInputTop.getText();
+
+                //Bug fix
+                if(filename.equals(StepperFunctions.TEXT_LOAD_SIGNAL)) {
+                    filename = "";
+                }
             }
 
             //Load key
@@ -867,11 +869,13 @@ public class StepperApp extends JFrame {
                 fields.setKey("");
             }
 
+            //Reset the progress
+            setLoadingStatusText("Loading input...");
 
             //Make the main thread
             executionDispatchThread = new StringParserDispatcher(this, encrypting, punctMode, filename);
 
-            //Start parsing the string
+            //Start parsing the string. Text loading is done in the Boss thread
             executionDispatchThread.execute();
         });
         enterAreaConstraints.anchor=LAST_LINE_END;
@@ -993,6 +997,9 @@ public class StepperApp extends JFrame {
         utilityButton.addActionListener(e -> {
             executionDispatchThread.cancel(true);
             //The thread handles the screen change.
+
+            executionDispatchThread = null;
+            System.gc();
         });
         constraints.gridx=0;
         constraints.gridy=3;
@@ -1093,6 +1100,8 @@ public class StepperApp extends JFrame {
             outputKey.setText("");
             textInputTop.setText("");
             textInputBottom.setText("");
+            fields.setText("");
+            fields.setKey("");
             executionDispatchThread = null;
             setScreen("LOGIN");
         });

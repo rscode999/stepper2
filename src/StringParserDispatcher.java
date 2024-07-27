@@ -1,10 +1,9 @@
 import javax.swing.*;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
 
 /**
  * A SwingWorker that processes a given input string with a StringParserBoss.<br><br>
+ *
+ * Most of a Dispatcher's work is to pass its input to a StringParserBoss, execute the Boss, and take the Boss's output.
  *
  * StringParserDispatchers and StringParserBosses take references to the main StepperModel because they are responsible for screen changes.<br>
  * Each StepperApp should contain exactly one StringParserDispatcher.<br>
@@ -12,11 +11,8 @@ import java.util.concurrent.ExecutionException;
  * Most of the work is done by a StringParserBoss created in the doInBackground method. This setup allows the Dispatcher to
  * cancel all the Boss's processing instantly.<br>
  *
- * Dispatchers and Workers share error messages through the App's key field, accessed with {app}.fields().key() and set
- * with {app}.fields().setKey(). Error messages always start with "~~~".<br><br>
- *
- * A StringParserDispatcher should be reconstructed before every use. Its inaccessible private fields are changed when
- * it processes its input.
+ * Dispatchers and Workers share exception messages through the App's key field, accessed with {app}.fields().key() and set
+ * with {app}.fields().setKey(). Exception messages always start with "~~~".
  */
 public class StringParserDispatcher extends SwingWorker<String,String> {
 
@@ -25,6 +21,11 @@ public class StringParserDispatcher extends SwingWorker<String,String> {
      * This reference is needed so the Boss can change the app's screen when it finishes. Can't be null
      */
     final private StepperApp app;
+
+    /**
+     * The thread that will do the Dispatcher's work
+     */
+    private StringParserBoss bossThread;
 
 
     /**
@@ -99,11 +100,16 @@ public class StringParserDispatcher extends SwingWorker<String,String> {
     protected String doInBackground() {
         String output = "";
         try {
-            StringParserBoss thread = new StringParserBoss(app,encrypting,punctMode,filepath);
-            thread.execute();
-            output = thread.get();
+            bossThread = new StringParserBoss(app,encrypting,punctMode,filepath);
+            bossThread.execute();
+            output = bossThread.get();
         }
-        catch (ExecutionException | InterruptedException e) {
+        catch (Exception e) {
+            System.out.println("Exception thrown: " + e);
+
+            //Important: must cancel the boss thread
+            bossThread.cancel(true);
+            bossThread = null;
             return "";
         }
 
@@ -126,12 +132,12 @@ public class StringParserDispatcher extends SwingWorker<String,String> {
             app.setScreen("INPUT");
         }
         else {
-            //Check for error messages in the load. If so, present an error dialog
+            //Check for exception messages in the load. If so, present an error dialog
             if(app.fields().key().startsWith("~~~")) {
                 System.out.println("Error detected");
                 app.setScreen("INPUT");
 
-                JOptionPane.showMessageDialog(app, app.fields().key().substring(3), "Error",
+                JOptionPane.showMessageDialog(app, app.fields().key().substring(3), "Load error",
                         JOptionPane.ERROR_MESSAGE);
             }
             //Otherwise, show the results
