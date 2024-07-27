@@ -337,7 +337,16 @@ public class StepperApp extends JFrame {
      * @return reference to (not a copy of) the app's fields
      */
     public StepperAppFields fields() {
-        return this.fields;
+        return fields;
+    }
+
+
+    /**
+     * Returns the current contents of the top text input
+     * @return contents of `textInputTop`
+     */
+    public String topInputValue() {
+        return textInputTop.getText();
     }
 
 
@@ -797,6 +806,27 @@ public class StepperApp extends JFrame {
             //Reset the progress
             setLoadingStatusText("Loading input...");
 
+
+            //Set input preferences
+            String filename = StepperFunctions.TEXT_LOAD_SIGNAL;
+            if(inputModeSelector.getSelectedItem().equals(INPUT_SELECTION_OPTIONS[2])) {
+                filename = textInputTop.getText();
+            }
+
+            //Load key
+            fields.setKey(textInputBottom.getText());
+            //Check the key if it's empty and decryption is selected
+            if(fields.key().length()<=0 && operationModeSelector.getSelectedItem().equals(OPERATION_SELECTION_OPTIONS[2])) {
+                //Ask user to continue and take the user's choice
+                int choice = JOptionPane.showConfirmDialog(this,
+                        "The decryption key will be randomized. Continue?", "Input warning", JOptionPane.YES_NO_OPTION);
+
+                //If user doesn't want to continue, stop
+                if(choice != JOptionPane.YES_OPTION) {
+                    return;
+                }
+            }
+
             //Set the operation mode based on the user's selection
             boolean encrypting = !operationModeSelector.getSelectedItem().equals(OPERATION_SELECTION_OPTIONS[2]);
 
@@ -838,43 +868,8 @@ public class StepperApp extends JFrame {
             }
 
 
-            //Take input from file, if selected. Text is loaded last to prevent the long loading process from interfering with pop-ups
-            if(inputModeSelector.getSelectedItem().equals(INPUT_SELECTION_OPTIONS[2])) {
-                try {
-                    fields.setText(StepperFunctions.getTextFromFile(textInputTop.getText()));
-                }
-                //If file can't load or no .txt extension, display an error message and stop loading
-                catch (FileNotFoundException | IllegalArgumentException e) {
-                    //The text to display is the FileNotFoundException's error message
-                    JOptionPane.showMessageDialog(this, e.getMessage(), "File input error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-            }
-            //Take input from text
-            else {
-                fields.setText(textInputTop.getText());
-            }
-
-            //Load key
-            fields.setKey(textInputBottom.getText());
-            //Check the key if it's empty and decryption is selected
-            if(fields.key().length()<=0 && operationModeSelector.getSelectedItem().equals(OPERATION_SELECTION_OPTIONS[2])) {
-                //Ask user to continue and take the user's choice
-                int choice = JOptionPane.showConfirmDialog(this,
-                        "The decryption key will be randomized. Continue?", "Input warning", JOptionPane.YES_NO_OPTION);
-
-                //If user doesn't want to continue, stop
-                if(choice != JOptionPane.YES_OPTION) {
-                    return;
-                }
-            }
-
             //Make the main thread
-            executionDispatchThread = new StringParserDispatcher(this, encrypting, punctMode);
-
-            //Set text inputs to have nothing
-            textInputTop.setText("");
-            textInputBottom.setText("");
+            executionDispatchThread = new StringParserDispatcher(this, encrypting, punctMode, filename);
 
             //Start parsing the string
             executionDispatchThread.execute();
@@ -1096,6 +1091,8 @@ public class StepperApp extends JFrame {
         utilityButton.addActionListener(e -> {
             outputText.setText("");
             outputKey.setText("");
+            textInputTop.setText("");
+            textInputBottom.setText("");
             executionDispatchThread = null;
             setScreen("LOGIN");
         });

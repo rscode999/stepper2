@@ -1,4 +1,6 @@
 import javax.swing.*;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -8,7 +10,10 @@ import java.util.concurrent.ExecutionException;
  * Each StepperApp should contain exactly one StringParserDispatcher.<br>
  *
  * Most of the work is done by a StringParserBoss created in the doInBackground method. This setup allows the Dispatcher to
- * cancel all the Boss's processing instantly.<br><br>
+ * cancel all the Boss's processing instantly.<br>
+ *
+ * Dispatchers and Workers share error messages through the App's key field, accessed with {app}.fields().key() and set
+ * with {app}.fields().setKey(). Error messages always start with "~~~".<br><br>
  *
  * A StringParserDispatcher should be reconstructed before every use. Its inaccessible private fields are changed when
  * it processes its input.
@@ -34,6 +39,11 @@ public class StringParserDispatcher extends SwingWorker<String,String> {
     final private byte punctMode;
 
 
+    /**
+     * The absolute path to the input file. If `filepath` is the empty string, the Boss will take its input from
+     * its parent App's top text input.
+     */
+    String filepath;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -46,14 +56,16 @@ public class StringParserDispatcher extends SwingWorker<String,String> {
      * @param app the app that uses this Boss. Can't be null
      * @param encrypting true if the Boss is encrypting, false if decrypting
      * @param punctMode 0 if including punctuation, 1 if excluding spaces, 2 if alphabetic characters only
+     * @param filepath absolute path to the input file. Empty (i.e. length=0) if taking input from a text field.
      */
-    public StringParserDispatcher(StepperApp app, boolean encrypting, byte punctMode) {
+    public StringParserDispatcher(StepperApp app, boolean encrypting, byte punctMode, String filepath) {
         assert app!=null;
         assert punctMode>=0 && punctMode<=2;
 
         this.app=app;
         this.encrypting=encrypting;
         this.punctMode=punctMode;
+        this.filepath=filepath;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -87,7 +99,7 @@ public class StringParserDispatcher extends SwingWorker<String,String> {
     protected String doInBackground() {
         String output = "";
         try {
-            StringParserBoss thread = new StringParserBoss(app,encrypting,punctMode);
+            StringParserBoss thread = new StringParserBoss(app,encrypting,punctMode,filepath);
             thread.execute();
             output = thread.get();
         }
@@ -104,7 +116,8 @@ public class StringParserDispatcher extends SwingWorker<String,String> {
     /**
      * Used to change the screen through the Dispatcher's `app` reference after doInBackground finishes.<br><br>
      *
-     * May also print messages to System.out for debugging purposes.
+     * Before screen changes, the method checks for error messages in the parent App's key field. If so,
+     * the Dispatcher resets the screen.
      */
     @Override
     protected void done() {
@@ -113,10 +126,19 @@ public class StringParserDispatcher extends SwingWorker<String,String> {
             app.setScreen("INPUT");
         }
         else {
-            System.out.println("Main execution thread finished");
-            app.setScreen("RESULTS");
-        }
+            //Check for error messages in the load. If so, present an error dialog
+            if(app.fields().key().startsWith("~~~")) {
+                System.out.println("Error detected");
+                app.setScreen("INPUT");
 
-        //The Boss loads the App's output text areas with the result
+                JOptionPane.showMessageDialog(app, app.fields().key().substring(3), "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+            //Otherwise, show the results
+            else {
+                System.out.println("Main execution thread finished");
+                app.setScreen("RESULTS");
+            }
+        }
     }
 }

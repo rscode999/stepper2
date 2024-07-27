@@ -26,12 +26,12 @@ public class StepperFunctions {
      */
     final public static int BLOCK_LENGTH = 19;
 
-
     /**
      * Name of the default text input file. Must end in ".txt".
      */
     final public static String DEFAULT_INPUT_FILE = "input.txt";
 
+    final public static String TEXT_LOAD_SIGNAL = "~";
 
     /**
      * Amount to rotate each block. Length must equal BLOCK_COUNT. Must be private. Indices are accessed through a getter method.
@@ -735,38 +735,38 @@ public class StepperFunctions {
 
 
     /**
-     * Returns all the text from a file whose name is `filename`.<br><br>
+     * Returns all the text from a file whose name is `filepath`. If `filepath` is the empty string, loads from
+     * StepperFunctions.DEFAULT_INPUT_FILE.<br><br>
      *
-     * The input filename must end with the ".txt" extension.<br>
+     * The input filepath must end with the ".txt" extension.<br>
      *
-     * If the input filename does not end in ".txt", the method throws an IllegalArgumentException<br>
-     * If the file could not be read, throws a FileNotFoundException.<br>
+     * If the input filepath does not end in ".txt" or the file could not be read, throws a FileNotFoundException.<br>
      *
-     * @param filename name of the input file. Can't be null
+     * @param filepath name of the input file. Can't be null
      * @return contents from the given input filename
-     * @throws FileNotFoundException if the file can't be read. Displays a descriptive error message if thrown.
-     * @throws IllegalArgumentException if input doesn't end in ".txt". Displays a descriptive error message if thrown.
+     * @throws FileNotFoundException if the file can't be read or the filename lacks the ".txt" extension.
+     * Displays a descriptive error message if thrown.
      */
-    public static String getTextFromFile(String filename) throws FileNotFoundException {
-        if(filename==null) {
+    public static String getTextFromFile(String filepath) throws FileNotFoundException {
+        if(filepath==null) {
             throw new AssertionError("Filename cannot be null");
         }
 
         File inputFile;
 
         //Create file from default or the top text input
-        if(filename.length()<=0) {
+        if(filepath.equals("")) {
             inputFile = new File(DEFAULT_INPUT_FILE);
         }
         else {
-            inputFile = new File(filename);
+            inputFile = new File(filepath);
         }
 
         String output = "";
 
         //Check if the input file ends in .txt
         if(inputFile.getName().length()<=3 || !inputFile.getName().substring((int) (inputFile.getName().length()-4)).equals(".txt")) {
-            throw new IllegalArgumentException("The input file must have a .txt extension");
+            throw new FileNotFoundException("The input file must have a .txt extension");
         }
         else {
             //Read the file and load it into the fields
@@ -782,7 +782,7 @@ public class StepperFunctions {
             //If error, throw an exception
             catch (FileNotFoundException e) {
                 String fileErrorMsg = "The input file \"" + inputFile.getName() + "\" does not exist\n";
-                if(filename.length()<=0) {
+                if(filepath.equals("")) {
                     fileErrorMsg += "in the folder containing the app";
                 }
                 else {
