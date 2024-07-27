@@ -82,6 +82,8 @@ public class StringParserBoss extends SwingWorker<String,String> {
      */
     @Override
     protected String doInBackground() throws Exception {
+        //Switch the screen
+        app.setScreen("PROCESSING");
 
         //Take the input
         StepperAppFields fields = app.fields();
