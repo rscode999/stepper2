@@ -1,20 +1,20 @@
 import javax.swing.*;
 
 /**
- * A SwingWorker that processes a given input string with a StringParserBoss.<br><br>
+ * A SwingWorker that processes a given input string with a ParsingBoss.<br><br>
  *
- * Most of a Dispatcher's work is to pass its input to a StringParserBoss, execute the Boss, and take the Boss's output.
+ * Most of a Dispatcher's work is to pass its input to a ParsingBoss, execute the Boss, and take the Boss's output.
  *
  * StringParserDispatchers and StringParserBosses take references to the main StepperModel because they are responsible for screen changes.<br>
- * Each StepperApp should contain exactly one StringParserDispatcher.<br>
+ * Each StepperApp should contain exactly one ParsingDispatcher.<br>
  *
- * Most of the work is done by a StringParserBoss created in the doInBackground method. This setup allows the Dispatcher to
+ * Most of the work is done by a ParsingBoss created in the doInBackground method. This setup allows the Dispatcher to
  * cancel all the Boss's processing instantly.<br>
  *
- * Dispatchers and Workers share exception messages through the App's key field, accessed with {app}.fields().key() and set
+ * Dispatchers and Bosses share exception messages through the App's key field, accessed with {app}.fields().key() and set
  * with {app}.fields().setKey(). Exception messages always start with "~~~".
  */
-public class StringParserDispatcher extends SwingWorker<String,String> {
+public class ParsingDispatcher extends SwingWorker<String,String> {
 
     /**
      * The parent app that the Boss works for.
@@ -25,7 +25,7 @@ public class StringParserDispatcher extends SwingWorker<String,String> {
     /**
      * The thread that will do the Dispatcher's work
      */
-    private StringParserBoss bossThread;
+    private ParsingBoss bossThread;
 
 
     /**
@@ -44,7 +44,7 @@ public class StringParserDispatcher extends SwingWorker<String,String> {
      * The absolute path to the input file. If `filepath` is the empty string, the Boss will take its input from
      * its parent App's top text input.
      */
-    String filepath;
+    final private String filepath;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -52,16 +52,17 @@ public class StringParserDispatcher extends SwingWorker<String,String> {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * Creates a new StringParserBoss and initializes its fields.
+     * Creates a new ParsingBoss and initializes its fields.
      *
      * @param app the app that uses this Boss. Can't be null
      * @param encrypting true if the Boss is encrypting, false if decrypting
      * @param punctMode 0 if including punctuation, 1 if excluding spaces, 2 if alphabetic characters only
-     * @param filepath absolute path to the input file. Empty (i.e. length=0) if taking input from a text field.
+     * @param filepath absolute path to the input file. Empty (i.e. length=0) if taking input from a text field. Can't be null
      */
-    public StringParserDispatcher(StepperApp app, boolean encrypting, byte punctMode, String filepath) {
-        assert app!=null;
-        assert punctMode>=0 && punctMode<=2;
+    public ParsingDispatcher(StepperApp app, boolean encrypting, byte punctMode, String filepath) {
+        if(app==null) throw new AssertionError("Parent app reference cannot be null");
+        if(!(punctMode>=0 && punctMode<=2)) throw new AssertionError("Punctuation mode out of valid range");
+        if(filepath==null) throw new AssertionError("Input filepath cannot be null");
 
         this.app=app;
         this.encrypting=encrypting;
@@ -100,16 +101,15 @@ public class StringParserDispatcher extends SwingWorker<String,String> {
     protected String doInBackground() {
         String output = "";
         try {
-            bossThread = new StringParserBoss(app,encrypting,punctMode,filepath);
+            bossThread = new ParsingBoss(app,encrypting,punctMode,filepath);
             bossThread.execute();
             output = bossThread.get();
         }
-        catch (Exception e) {
-            System.out.println("Exception thrown: " + e);
+        catch (Throwable t) {
+            System.out.println("Exception thrown in Dispatcher thread: " + t);
 
             //Important: must cancel the boss thread
             bossThread.cancel(true);
-            bossThread = null;
             return "";
         }
 
@@ -133,12 +133,12 @@ public class StringParserDispatcher extends SwingWorker<String,String> {
         }
         else {
             //Check for exception messages in the load. If so, present an error dialog
-            if(app.fields().key().startsWith("~~~")) {
+            if(app.fields().key().startsWith( StepperFunctions.INPUT_ERROR_SIGNAL)) {
                 System.out.println("Error detected");
                 app.setScreen("INPUT");
 
-                JOptionPane.showMessageDialog(app, app.fields().key().substring(3), "Load error",
-                        JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(app, app.fields().key().substring( StepperFunctions.INPUT_ERROR_SIGNAL.length() ),
+                        "Load error", JOptionPane.ERROR_MESSAGE);
             }
             //Otherwise, show the results
             else {

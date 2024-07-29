@@ -1,12 +1,12 @@
 import javax.swing.*;
 
 /**
- * Does a small portion of a StringParserBoss's work. Cannot have a field that can hold a StepperApp.<br><br>
+ * Does a small portion of a ParsingBoss's work. Cannot have a field that can hold a StepperApp.<br><br>
  *
  * The worker takes the position of the next block and amount of numbers processed so far to determine which piece of the
  * Boss's work to do.
  */
-public class StringOperationsWorker extends SwingWorker<String,String> {
+public class ParsingOperationsWorker extends SwingWorker<String,String> {
 
     /**
      * The String to process. Can't be null
@@ -51,7 +51,7 @@ public class StringOperationsWorker extends SwingWorker<String,String> {
 
 
     /**
-     * Creates a StringOperationsWorker and loads its fields
+     * Creates a ParsingOperationsWorker and loads its fields
      * @param input the substring it should process. Can't be null
      * @param key the key to process the substring with. Can't be null. No subarrays can be null. All indices must be on [0,25]
      * @param encrypting true if this Worker should encrypt its text, false otherwise
@@ -60,8 +60,8 @@ public class StringOperationsWorker extends SwingWorker<String,String> {
      * @param numbersPreviouslyEncrypted amount of numbers encrypted so far. Cannot be negative
      * @param name the name of the Worker
      */
-    public StringOperationsWorker(String input, byte[][] key, boolean encrypting,
-                                  byte punctMode, int startBlock, int numbersPreviouslyEncrypted, String name) {
+    public ParsingOperationsWorker(String input, byte[][] key, boolean encrypting,
+                                   byte punctMode, int startBlock, int numbersPreviouslyEncrypted, String name) {
         assert input!=null;
         assert key!=null;
         assert punctMode>=0 && punctMode<=2;

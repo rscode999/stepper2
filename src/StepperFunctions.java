@@ -43,7 +43,16 @@ public class StepperFunctions {
     final public static int MAX_THREADS = 999;
 
     /**
-     * When given to a StringParserBoss as a filename, this load signal tells the Boss to take its input from a text field
+     * Placed into an App's key field (through app.fields().setKey(...)), followed by an error message,
+     * by a ParsingBoss if the Boss encounters an error caused by user input.<br><br>
+     *
+     * If detected in an App's key field, the parent ParsingDispatcher should stop its processing, return to the input screen, and
+     * display an error message.
+     */
+    final public static String INPUT_ERROR_SIGNAL = "*~~*";
+
+    /**
+     * When given to a ParsingBoss as a filename, this load signal tells the Boss to take its input from a text field
      * instead of from a file.<br><br>
      * Cannot be the empty string because empty strings trigger loading from the default input file.
      */

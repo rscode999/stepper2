@@ -5,12 +5,12 @@ import java.util.concurrent.ExecutionException;
 
 
 /**
- * Created by a StringParserDispatcher to process the Dispatcher's input.<br><br>
+ * Created by a ParsingDispatcher to process the Dispatcher's input.<br><br>
  *
  * Dispatchers and Workers share exception messages through the App's key field, accessed with {app}.fields().key() and set
  * with {app}.fields().setKey(). Exception messages always start with "~~~".
  */
-public class StringParserBoss extends SwingWorker<String,String> {
+public class ParsingBoss extends SwingWorker<String,String> {
 
     /**
      * The worker threads that this Boss employs. The array's length may vary depending on the number of threads used
@@ -20,7 +20,7 @@ public class StringParserBoss extends SwingWorker<String,String> {
 
     /**
      * The parent app that the Boss works for.
-     * This reference is needed so the Boss can change the app's screen when it finishes. Can't be null
+     * This reference is needed so the Boss can change the app's screen and its variable fields. Can't be null
      */
     final private StepperApp app;
 
@@ -30,6 +30,12 @@ public class StringParserBoss extends SwingWorker<String,String> {
      */
     final private boolean encrypting;
 
+    /**
+     * The absolute path to the input file. If `filepath` is the empty string, the Boss will take its input from
+     * its parent App's top text input.
+     */
+    final private String filepath;
+
 
     /**
      * Allowed values: 0 if including punctuation, 1 if excluding spaces, 2 if alphabetic characters only
@@ -37,23 +43,24 @@ public class StringParserBoss extends SwingWorker<String,String> {
     final private byte punctMode;
 
 
-    /**
-     * The absolute path to the input file. If `filepath` is the empty string, the Boss will take its input from
-     * its parent App's top text input.
-     */
-    final private String filepath;
 
     /**
-     * Creates a new StringParserBoss and initializes its fields. Should be created only from a StringParserDispatcher.
+     * Creates a new ParsingBoss and initializes its fields. Should be created only from a ParsingDispatcher.
      * @param app reference to the parent app. Can't be null
      * @param encrypting true if the Boss will encrypt its input, false if decrypting
      * @param punctMode 0 if including punctuation, 1 if excluding spaces, 2 if alphabetic characters only. Any other value is not allowed
      * @param filepath absolute path to the input file. Empty (i.e. length=0) if taking input from a text field. Can't be null
      */
-    public StringParserBoss(StepperApp app, boolean encrypting, byte punctMode, String filepath) {
-        assert app!=null;
-        assert punctMode>=0 && punctMode<=2;
-        assert filepath != null;
+    public ParsingBoss(StepperApp app, boolean encrypting, byte punctMode, String filepath) {
+        if(app==null) {
+            throw new AssertionError("App reference cannot be null");
+        }
+        if(!(punctMode>=0 && punctMode<=2)) {
+            throw new AssertionError("Punctuation mode out of valid range");
+        }
+        if(filepath==null) {
+            throw new AssertionError("Filepath cannot be null");
+        }
 
         this.app=app;
         this.encrypting=encrypting;
@@ -89,7 +96,7 @@ public class StringParserBoss extends SwingWorker<String,String> {
      * Returns the result of the Boss's processing.
      * Also sets the App's output when finished and periodically updates the App's progress text.<br><br>
      *
-     * By the end of this method, the App's fields (i.e. app.fields()) should be updated with the results.<br>
+     * By the end of this method, the parent App's fields (i.e. app.fields()) should be updated with the results.<br>
      * If this method throws an exception, excluding exceptions thrown when interrupted, the method will
      * load the App's key field with an error message, which will be interpreted by the Dispatcher that uses this Boss.
      * Error messages always start with "~~~".<br><br>
@@ -108,12 +115,17 @@ public class StringParserBoss extends SwingWorker<String,String> {
         try {
             if (filepath.equals(StepperFunctions.TEXT_LOAD_SIGNAL)) {
                 app.fields().setText(app.topInputValue());
+                throw new AssertionError();
             } else {
                 app.fields().setText(StepperFunctions.getTextFromFile(filepath));
             }
         }
-        catch (FileNotFoundException e) {
-            app.fields().setKey("~~~" + e.getMessage());
+        catch(FileNotFoundException e) {
+            app.fields().setKey(StepperFunctions.INPUT_ERROR_SIGNAL + e.getMessage());
+            return "";
+        }
+        catch(Throwable t) {
+            app.fields().setKey(StepperFunctions.INPUT_ERROR_SIGNAL + "Exception at text loading- " + t);
             return "";
         }
 
@@ -123,7 +135,9 @@ public class StringParserBoss extends SwingWorker<String,String> {
         String inputKey = app.fields().key();
 
 
+        System.gc();
         app.setLoadingStatusText("Formatting...");
+
         /////////////////////////////////////////////////////
         //REMOVE DIACRITICS USING ALL THREADS
 
@@ -133,9 +147,9 @@ public class StringParserBoss extends SwingWorker<String,String> {
                 StepperFunctions.BLOCK_LENGTH);
 
         //Create worker threads and assign them a workload
-        workerThreads = new StringDiacriticsWorker[textPieces.length];
+        workerThreads = new ParsingDiacriticsWorker[textPieces.length];
         for(int i=0; i<workerThreads.length; i++) {
-            workerThreads[i] = new StringDiacriticsWorker(textPieces[i], Integer.toString(i));
+            workerThreads[i] = new ParsingDiacriticsWorker(textPieces[i], Integer.toString(i));
         }
 
 
@@ -168,6 +182,7 @@ public class StringParserBoss extends SwingWorker<String,String> {
         //OPERATION
         //Doesn't use a function to save memory, processing power, and the organizational scheme
 
+        System.gc();
         app.setLoadingStatusText("Executing...");
 
         //Format the key
@@ -182,11 +197,11 @@ public class StringParserBoss extends SwingWorker<String,String> {
                 StepperFunctions.BLOCK_LENGTH);
 
         //Make the worker threads: one index for each piece of the text
-        workerThreads = new StringOperationsWorker[textPieces.length];
+        workerThreads = new ParsingOperationsWorker[textPieces.length];
         int startingBlock = 0;
         int numberCount = 0;
         for (int i = 0; i < workerThreads.length; i++) {
-            workerThreads[i] = new StringOperationsWorker(textPieces[i], operationsKey,
+            workerThreads[i] = new ParsingOperationsWorker(textPieces[i], operationsKey,
                     encrypting, punctMode, startingBlock, numberCount, Integer.toString(i));
 
             int[] charCounts = StepperFunctions.countAlphaAndNumericChars(textPieces[i]);
@@ -237,7 +252,7 @@ public class StringParserBoss extends SwingWorker<String,String> {
         textPieces = null;
         app.fields().setText(text);
 
-        //Screen changing occurs in the StringParserDispatcher that created this Boss
+        //Screen changing occurs in the ParsingDispatcher that created this Boss
         return text;
     }
 

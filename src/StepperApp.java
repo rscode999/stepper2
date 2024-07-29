@@ -1,6 +1,5 @@
 import java.awt.*;
 import javax.swing.*;
-import java.io.FileNotFoundException;
 
 import static java.awt.GridBagConstraints.*;
 
@@ -95,7 +94,7 @@ public class StepperApp extends JFrame {
      * must return a value on the interval [1, StepperFunctions.MAX_THREADS].
      */
     final private static String[] THREAD_SELECTION_OPTIONS = new String[] {"Select number of threads (default: 1)", "Custom...",
-            "2", "4", "6", "8", "10", "12", "16", "20", "24", "32", "64", "96", "128", "192", "256"};
+            "2", "4", "6", "8", "10", "12", "16", "20", "24", "32", "48", "64"};
 
 
     /**
@@ -124,7 +123,7 @@ public class StepperApp extends JFrame {
      *
      * May be null until input processing begins. After processing finishes, this field may become null again.
      */
-    private StringParserDispatcher executionDispatchThread;
+    private ParsingDispatcher executionDispatchThread;
 
 
     ///////////////////
@@ -873,7 +872,7 @@ public class StepperApp extends JFrame {
             setLoadingStatusText("Loading input...");
 
             //Make the main thread
-            executionDispatchThread = new StringParserDispatcher(this, encrypting, punctMode, filename);
+            executionDispatchThread = new ParsingDispatcher(this, encrypting, punctMode, filename);
 
             //Start parsing the string. Text loading is done in the Boss thread
             executionDispatchThread.execute();
@@ -997,9 +996,6 @@ public class StepperApp extends JFrame {
         utilityButton.addActionListener(e -> {
             executionDispatchThread.cancel(true);
             //The thread handles the screen change.
-
-            executionDispatchThread = null;
-            System.gc();
         });
         constraints.gridx=0;
         constraints.gridy=3;
@@ -1049,7 +1045,7 @@ public class StepperApp extends JFrame {
         outputText.setEditable(false);
         outputText.setFont(SMALL_FONT);
         outputText.setLineWrap(true);
-        //The StringParserBoss will load the text area
+        //The ParsingBoss will load the text area
         JScrollPane textScroll = new JScrollPane(outputText);
         textScroll.setBackground(INPUT_BACKGROUND_COLOR);
         textScroll.setSize(new Dimension(10, 40));
@@ -1081,7 +1077,7 @@ public class StepperApp extends JFrame {
         outputKey.setEditable(false);
         outputKey.setFont(SMALL_FONT);
         outputKey.setLineWrap(true);
-        //The StringParserBoss will load the text area
+        //The ParsingBoss will load the text area
         JScrollPane keyScroll = new JScrollPane(outputKey);
         keyScroll.setBackground(INPUT_BACKGROUND_COLOR);
         keyScroll.setSize(new Dimension(10, 40));
