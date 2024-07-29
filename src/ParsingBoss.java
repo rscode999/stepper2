@@ -115,7 +115,6 @@ public class ParsingBoss extends SwingWorker<String,String> {
         try {
             if (filepath.equals(StepperFunctions.TEXT_LOAD_SIGNAL)) {
                 app.fields().setText(app.topInputValue());
-                throw new AssertionError();
             } else {
                 app.fields().setText(StepperFunctions.getTextFromFile(filepath));
             }
