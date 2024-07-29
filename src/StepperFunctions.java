@@ -81,7 +81,7 @@ public class StepperFunctions {
                 "123567890", "314159265", "69420", "test1", "iloveyou",
                 "asdfghjkl", "Password1", "12345", "123456", "1234567890", "123467890", "123567890",
                 "1", "2", "3", "4", "5", "6", "7", "8", "9", "abcd1234", "987654321",
-                "asdf", "password", "0", "letmein", ""};
+                "asdf", "", "password", "0", "letmein"};
 
         if(constantInvarsBroken()) {
             throw new AssertionError("An invariant of a constant is not true");
