@@ -253,9 +253,9 @@ public class StepperApp extends JFrame {
         for(int i=2; i<THREAD_SELECTION_OPTIONS.length; i++) {
             try {
                 int currentValue = Integer.parseInt(THREAD_SELECTION_OPTIONS[i]);
-                if(currentValue<1 || currentValue>StepperFunctions.MAX_THREADS) {
+                if(currentValue<1 || currentValue>StepperAppFields.MAX_THREADS) {
                     throw new AssertionError("All default thread selection options except for the first two must represent integers"
-                    + " on the interval [1, " + StepperFunctions.MAX_THREADS + "]");
+                    + " on the interval [1, " + StepperAppFields.MAX_THREADS + "]");
                 }
             }
             catch(NumberFormatException e) {
@@ -471,7 +471,7 @@ public class StepperApp extends JFrame {
         enterButton.setFont(SMALL_FONT);
         enterButton.setPreferredSize(new Dimension((int) (APP_DIMENSIONS.width/10.0), (int) (APP_DIMENSIONS.height/12.0)));
         enterButton.addActionListener(e -> {
-            fields.setLoginCredentials(fcns.login(passwordInput.getPassword()));
+            fields.setLoginCredentials(fields.login(passwordInput.getPassword()));
 
             if(fields.loginCredentials()==-1) {
                 setScreen("LOGIN_REJECT");
@@ -804,12 +804,12 @@ public class StepperApp extends JFrame {
         enterButton.addActionListener(event -> {
 
             //Set input preferences. Text loading is done in the Boss thread
-            String filename = StepperFunctions.TEXT_LOAD_SIGNAL;
+            String filename = StepperAppFields.TEXT_LOAD_SIGNAL;
             if(inputModeSelector.getSelectedItem().equals(INPUT_SELECTION_OPTIONS[2])) {
                 filename = textInputTop.getText();
 
                 //Bug fix
-                if(filename.equals(StepperFunctions.TEXT_LOAD_SIGNAL)) {
+                if(filename.equals(StepperAppFields.TEXT_LOAD_SIGNAL)) {
                     filename = "";
                 }
             }
@@ -931,7 +931,7 @@ public class StepperApp extends JFrame {
                 }
                 catch(IllegalArgumentException e) {
                     threadCountSelector.setSelectedItem(THREAD_SELECTION_OPTIONS[0]);
-                    JOptionPane.showMessageDialog(this, "The input must be an integer between 1 and " + StepperFunctions.MAX_THREADS,
+                    JOptionPane.showMessageDialog(this, "The input must be an integer between 1 and " + StepperAppFields.MAX_THREADS,
                             "Invalid input", JOptionPane.ERROR_MESSAGE);
                     return;
                 }

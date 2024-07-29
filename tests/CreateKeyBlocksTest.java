@@ -243,21 +243,21 @@ public class CreateKeyBlocksTest {
             "with all characters' numerical values loaded in sequential order")
     @Test
     void testNormalLoad() {
-        StepperFunctions fcns = new StepperFunctions();
+        ParsingBoss fcns = new ParsingBoss();
 
         String input = "abcdefgh";
         byte[][] expected = {{0,1,2,3}, {4,5,6,7}};
-        byte[][] result = fcns.createKeyBlocks(input, 2, 4);
+        byte[][] result = fcns.createKeyBlocks_Testing(input, 2, 4);
         printAssert(expected, result, 1, 3);
 
         input = "xyzxyzxyzxyz";
         expected = new byte[][] {{23,24,25}, {23,24,25}, {23,24,25}, {23,24,25}};
-        result = fcns.createKeyBlocks(input, 4,3);
+        result = fcns.createKeyBlocks_Testing(input, 4,3);
         printAssert(expected, result, 3, 2);
 
         input = "abababababab";
         expected = new byte[][] {{0,1}, {0,1}, {0,1}, {0,1}, {0,1}, {0,1}};
-        result = fcns.createKeyBlocks(input, 6,2);
+        result = fcns.createKeyBlocks_Testing(input, 6,2);
         printAssert(expected, result, 5,1);
     }
 
@@ -265,21 +265,21 @@ public class CreateKeyBlocksTest {
             "The one index should be a byte[] array containing all numerical values")
     @Test
     void testSingleBlockLoad() {
-        StepperFunctions fcns = new StepperFunctions();
+        ParsingBoss fcns = new ParsingBoss();
 
         String input = "abcdefgh";
         byte[][] expected = {{0,1,2,3,4,5,6,7}};
-        byte[][] result = fcns.createKeyBlocks(input, 1, 8);
+        byte[][] result = fcns.createKeyBlocks_Testing(input, 1, 8);
         printAssert(expected, result, 0, 7);
 
         input = "xyzxyzxyzxyz";
         expected = new byte[][] {{23,24,25, 23,24,25, 23,24,25, 23,24,25}};
-        result = fcns.createKeyBlocks(input, 1,12);
+        result = fcns.createKeyBlocks_Testing(input, 1,12);
         printAssert(expected, result, 0, 11);
 
         input = "x";
         expected = new byte[][] {{23}};
-        result = fcns.createKeyBlocks(input, 1,1);
+        result = fcns.createKeyBlocks_Testing(input, 1,1);
         printAssert(expected, result, 0, 0);
     }
 
@@ -287,24 +287,24 @@ public class CreateKeyBlocksTest {
             "byte[][] array that holds only the first blocks*charsPerBlock characters in the input string")
     @Test
     void testOverflow() {
-        StepperFunctions fcns = new StepperFunctions();
+        ParsingBoss fcns = new ParsingBoss();
 
         //Overflow by one character
         String input = "abcdefg";
         byte[][] expected = {{0,1,2}, {3,4,5}};
-        byte[][] result = fcns.createKeyBlocks(input, 2, 3);
+        byte[][] result = fcns.createKeyBlocks_Testing(input, 2, 3);
         printAssert(expected, result, 1, 2);
 
         //Overflow by many characters
         input = "bcdefghijk";
         expected = new byte[][] {{1,2,3}, {4,5,6}, {7,8,9}};
-        result = fcns.createKeyBlocks(input, 3,3);
+        result = fcns.createKeyBlocks_Testing(input, 3,3);
         printAssert(expected, result, 2, 2);
 
         //Overflow with a single subarray
         input = "bcdefghijklmnopq";
         expected = new byte[][] {{1,2,3, 4,5,6, 7,8,9, 10}};
-        result = fcns.createKeyBlocks(input, 1,10);
+        result = fcns.createKeyBlocks_Testing(input, 1,10);
         printAssert(expected, result, 0, 9);
     }
 
@@ -313,38 +313,38 @@ public class CreateKeyBlocksTest {
             "should be random numbers on [0,25]")
     @Test
     void testUnderflow() {
-        StepperFunctions fcns = new StepperFunctions();
+        ParsingBoss fcns = new ParsingBoss();
 
         //When extra characters fit evenly inside a new array index. Final 3 indices should be random
         String input = "abcdef";
         byte[][] expected = {{0,1,2}, {3,4,5}, {6,20,25}};
-        byte[][] result = fcns.createKeyBlocks(input, 3, 3);
+        byte[][] result = fcns.createKeyBlocks_Testing(input, 3, 3);
         printAssert(expected, result, 1, 2);
 
         //First 6 indices should be the same after another call to setWorkerLoads
-        result = fcns.createKeyBlocks(input, 3, 3);
+        result = fcns.createKeyBlocks_Testing(input, 3, 3);
         printAssert(expected, result, 1, 2);
 
 
         //When extra characters don't fit evenly inside a new array index. Final 2 indices should be random
         input = "bcdefghijk";
         expected = new byte[][] {{1,2,3}, {4,5,6}, {7,8,9}, {10,25,0}};
-        result = fcns.createKeyBlocks(input, 4,3);
+        result = fcns.createKeyBlocks_Testing(input, 4,3);
         printAssert(expected, result, 3, 0);
 
         //First 10 indices should be the same after another call to setWorkerLoads
-        result = fcns.createKeyBlocks(input, 4,3);
+        result = fcns.createKeyBlocks_Testing(input, 4,3);
         printAssert(expected, result, 3, 0);
 
 
         //When the string has one character and output array has more than one index, all other indices except the first are random
         input = "a";
         expected = new byte[][] {{0,2,3,4,5}, {5,2,4,7,20}, {4,18,14,0,25}};
-        result = fcns.createKeyBlocks(input, 3,5); //first index should be 0, all others should be random
+        result = fcns.createKeyBlocks_Testing(input, 3,5); //first index should be 0, all others should be random
         printAssert(expected, result, 0, 0); //first index should be 0, all others should be random
 
         //First index should be the same after another call to setWorkerLoads
-        result = fcns.createKeyBlocks(input, 3,5);
+        result = fcns.createKeyBlocks_Testing(input, 3,5);
         printAssert(expected, result, 0, 0);
 
 
@@ -352,14 +352,14 @@ public class CreateKeyBlocksTest {
         input = "abcdefg";
         expected = new byte[][] {{0,1,2,3}, {4,5,6,25}, {3,15,19,24}};
         for(int i=1; i<=100; i++) {
-            result = fcns.createKeyBlocks(input, 3, 4);
+            result = fcns.createKeyBlocks_Testing(input, 3, 4);
             printAssert(expected, result, 1, 2);
         }
 
         //All indices should be randomized if the input string is empty
         input = "";
         expected = new byte[][] {{25,1,22,8}, {10,5,11,25}, {3,15,19,24}};
-        result = fcns.createKeyBlocks(input, 3, 4);
+        result = fcns.createKeyBlocks_Testing(input, 3, 4);
         printAssert(expected, result, -1, 0);
     }
 
@@ -367,14 +367,14 @@ public class CreateKeyBlocksTest {
             "WARNING: this test takes a long time to run")
     @Test
     void testRandomCharsInRange() {
-        StepperFunctions fcns = new StepperFunctions();
+        ParsingBoss fcns = new ParsingBoss();
 
         //All randomized indices should be on [0,25] for each run
         String input = "abcdef";
         byte[][] expected = new byte[][] {{0,1,2,3,4,5,10,25}};
         byte[][] result;
         for(int i=1; i<=100000; i++) {
-            result = fcns.createKeyBlocks(input, 1, 8);
+            result = fcns.createKeyBlocks_Testing(input, 1, 8);
             printAssert(expected, result, 0, 5);
         }
 
@@ -382,7 +382,7 @@ public class CreateKeyBlocksTest {
         input = "abcdefg";
         expected = new byte[][] {{0,1,2,3}, {4,5,6,25}, {3,15,19,24}};
         for(int i=1; i<=100000; i++) {
-            result = fcns.createKeyBlocks(input, 3, 4);
+            result = fcns.createKeyBlocks_Testing(input, 3, 4);
             printAssert(expected, result, 1, 2);
         }
 
@@ -390,7 +390,7 @@ public class CreateKeyBlocksTest {
         input = "";
         expected = new byte[][] {{0,1,2,3}, {4,5,6,25}, {3,15,19,24}};
         for(int i=1; i<=100000; i++) {
-            result = fcns.createKeyBlocks(input, 3, 4);
+            result = fcns.createKeyBlocks_Testing(input, 3, 4);
             printAssert(expected, result, -1, 0);
         }
     }
@@ -398,88 +398,88 @@ public class CreateKeyBlocksTest {
     @DisplayName("createKeyBlocks should treat uppercase letters in the same way as lowercase letters")
     @Test
     void testUppercase() {
-        StepperFunctions fcns = new StepperFunctions();
+        ParsingBoss fcns = new ParsingBoss();
 
         //One uppercase letter at the beginning
         String input = "Abcdef";
         byte[][] expected = new byte[][] {{0,1,2,3,4,5}};
-        byte[][] result = fcns.createKeyBlocks(input, 1, 6);
+        byte[][] result = fcns.createKeyBlocks_Testing(input, 1, 6);
         printAssert(expected, result, 0, 5);
 
         //One uppercase letter at the end
         input = "abcdeF";
         expected = new byte[][] {{0,1,2,3,4,5}};
-        result = fcns.createKeyBlocks(input, 1, 6);
+        result = fcns.createKeyBlocks_Testing(input, 1, 6);
         printAssert(expected, result, 0, 5);
 
         //Many uppercase letters
         input = "abCdEf";
         expected = new byte[][] {{0,1,2,3,4,5}};
-        result = fcns.createKeyBlocks(input, 1, 6);
+        result = fcns.createKeyBlocks_Testing(input, 1, 6);
         printAssert(expected, result, 0, 5);
 
         //When the result needs multiple subarrays
         input = "AbCdwxYzfgHi";
         expected = new byte[][] {{0,1,2,3}, {22,23,24,25}, {5,6,7,8}};
-        result = fcns.createKeyBlocks(input, 3, 4);
+        result = fcns.createKeyBlocks_Testing(input, 3, 4);
         printAssert(expected, result, 2, 3);
 
         //All uppercase letters
         input = "ABCDEFGHI";
         expected = new byte[][] {{0,1,2,3}, {4,5,6,7}, {8,16,25,21}};
-        result = fcns.createKeyBlocks(input, 3, 4);
+        result = fcns.createKeyBlocks_Testing(input, 3, 4);
         printAssert(expected, result, 2, 0);
     }
 
     @DisplayName("createKeyBlocks should ignore any character that is not an English ASCII letter")
     @Test
     void testNonLetters() {
-        StepperFunctions fcns = new StepperFunctions();
+        ParsingBoss fcns = new ParsingBoss();
 
         //Non-letters at the beginning
         String input = "----abcdef";
         byte[][] expected = new byte[][] {{0,1,2,3,4,5}};
-        byte[][] result = fcns.createKeyBlocks(input, 1, 6);
+        byte[][] result = fcns.createKeyBlocks_Testing(input, 1, 6);
         printAssert(expected, result, 0, 5);
 
         //Non-letters at the end
         input = "abcdef.[';";
         expected = new byte[][] {{0,1,2}, {3,4,5}};
-        result = fcns.createKeyBlocks(input, 2, 3);
+        result = fcns.createKeyBlocks_Testing(input, 2, 3);
         printAssert(expected, result, 1, 2);
 
         //Non-letters in the middle
         input = "abc    -+-;.\\def";
         expected = new byte[][] {{0,1,2}, {3,4,5}};
-        result = fcns.createKeyBlocks(input, 2, 3);
+        result = fcns.createKeyBlocks_Testing(input, 2, 3);
         printAssert(expected, result, 1, 2);
 
         //Numbers (should ignore numbers)
         input = "0abc123def3";
         expected = new byte[][] {{0,1,2}, {3,4,5}};
-        result = fcns.createKeyBlocks(input, 2, 3);
+        result = fcns.createKeyBlocks_Testing(input, 2, 3);
         printAssert(expected, result, 1, 2);
 
         //Letters that appear like ASCII letters but are not
         input = "аbcdefg"; //The first letter is a Cyrillic 'a'
         expected = new byte[][] {{1,2,3}, {4,5,6}};
-        result = fcns.createKeyBlocks(input, 2, 3);
+        result = fcns.createKeyBlocks_Testing(input, 2, 3);
         printAssert(expected, result, 1, 2);
     }
 
     @DisplayName("createKeyBlocks should treat letters with diacritics as English ASCII letters with diacritics removed")
     @Test
     void testDiacritics() {
-        StepperFunctions fcns = new StepperFunctions();
+        ParsingBoss fcns = new ParsingBoss();
 
         String input = "açàáâãäå";
         byte[][] expected = new byte[][] {{0,2,0,0}, {0,0,0,0}};
-        byte[][] result = fcns.createKeyBlocks(input, 2, 4);
+        byte[][] result = fcns.createKeyBlocks_Testing(input, 2, 4);
         printAssert(expected, result, 1, 3);
 
         input = "ýßǹń ñňÿð ë";
         expected = new byte[][] {{24,18,13}, {13,13,13}, {24,3,4}};
-        result = fcns.createKeyBlocks(input, 3, 3);
+        result = fcns.createKeyBlocks_Testing(input, 3, 3);
         printAssert(expected, result, 2, 2);
     }
 }

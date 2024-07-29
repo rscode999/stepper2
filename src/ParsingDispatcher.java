@@ -133,11 +133,11 @@ public class ParsingDispatcher extends SwingWorker<String,String> {
         }
         else {
             //Check for exception messages in the load. If so, present an error dialog
-            if(app.fields().key().startsWith( StepperFunctions.INPUT_ERROR_SIGNAL)) {
+            if(app.fields().key().startsWith( StepperAppFields.INPUT_ERROR_SIGNAL)) {
                 System.out.println("Error detected");
                 app.setScreen("INPUT");
 
-                JOptionPane.showMessageDialog(app, app.fields().key().substring( StepperFunctions.INPUT_ERROR_SIGNAL.length() ),
+                JOptionPane.showMessageDialog(app, app.fields().key().substring( StepperAppFields.INPUT_ERROR_SIGNAL.length() ),
                         "Load error", JOptionPane.ERROR_MESSAGE);
             }
             //Otherwise, show the results
