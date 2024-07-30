@@ -112,11 +112,6 @@ public class StepperApp extends JFrame {
      */
     final private StepperAppFields fields;
 
-    /**
-     * Contains methods to operate on the fields. Can't be null
-     */
-    final private StepperFunctions fcns;
-
 
     /**
      * A thread to start execution of the user input.<br><br>
@@ -245,8 +240,7 @@ public class StepperApp extends JFrame {
      * Creates a new StepperApp and initializes its fields
      */
     public StepperApp() {
-        //Configure function and field classes
-        fcns = new StepperFunctions();
+        //Configure field classes
         fields = new StepperAppFields();
 
         //Idiot check: all thread count choices in the default selection must be on the interval [1, MAX_THREADS]
@@ -566,7 +560,7 @@ public class StepperApp extends JFrame {
 
 
         //Screen header
-        textHeader = new JLabel("Stepper App v2.3");
+        textHeader = new JLabel("Stepper App v2.4");
         textHeader.setFont(LARGE_FONT);
         constraints.gridx=0;
         constraints.gridy=0;

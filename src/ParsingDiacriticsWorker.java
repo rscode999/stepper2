@@ -8,22 +8,26 @@ public class ParsingDiacriticsWorker extends SwingWorker<String,String> {
     /**
      * The text to remove diacritics from
      */
-    String text;
+    final private String text;
 
     /**
      * The name of the Worker, mostly for debugging purposes.
      */
-    String name;
+    final private String name;
 
 
     /**
      * Creates a ParsingDiacriticsWorker and loads it with `text`
      * @param text String to remove diacritics from, non-null
-     * @param name custom name for this Worker, non-null
+     * @param name custom name for this Worker, non-null and cannot equal the string "null"
      */
     public ParsingDiacriticsWorker(String text, String name) {
-        assert text != null;
-        assert name != null;
+        if(text==null) {
+            throw new AssertionError("Text cannot be null");
+        }
+        if(name==null || name.equals("null")) {
+            throw new AssertionError("Name cannot be null");
+        }
 
         this.text = text;
         this.name = name;
@@ -57,25 +61,11 @@ public class ParsingDiacriticsWorker extends SwingWorker<String,String> {
     }
 
 
-    /**
-     * Returns a lowercased version of `input` without diacritics or accent marks.<br><br>
-     *
-     * Any character that is not transformed by the private helper method `removeDiacritics(char)` is not changed.
-     *
-     * @param input text to remove diacritics from
-     * @return copy of input without diacritics in lowercase letters
-     */
-    private String removeDiacritics(String input) {
-        String output="";
-        for(int i=0; i<input.length(); i++) {
-            if(this.isCancelled()) {
-                return "";
-            }
 
-            output += removeDiacritics(input.charAt(i));
-        }
-        return output;
-    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 
 
     /**
@@ -121,6 +111,27 @@ public class ParsingDiacriticsWorker extends SwingWorker<String,String> {
 
         return charReplacement;
 
+    }
+
+
+    /**
+     * Returns a lowercased version of `input` without diacritics or accent marks.<br><br>
+     *
+     * Any character that is not transformed by the private helper method `removeDiacritics(char)` is not changed.
+     *
+     * @param input text to remove diacritics from
+     * @return copy of input without diacritics in lowercase letters
+     */
+    private String removeDiacritics(String input) {
+        String output="";
+        for(int i=0; i<input.length(); i++) {
+            if(this.isCancelled()) {
+                return "";
+            }
+
+            output += removeDiacritics(input.charAt(i));
+        }
+        return output;
     }
 
 }

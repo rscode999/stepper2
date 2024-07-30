@@ -55,6 +55,8 @@
 //    @DisplayName("Test")
 //    @Test
 //    void test() {
+//        ParsingOperationsWorker w = new ParsingOperationsWorker();
+//
 //        byte[] expected = StepperFunctions.initializeKeyBlockPositions_Testing(0);
 //        byte[] result = StepperFunctions.initializeKeyBlockPositions(0);
 //        printAssert(expected, result);
