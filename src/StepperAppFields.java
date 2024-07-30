@@ -160,6 +160,7 @@ public class StepperAppFields {
         return loginCredentials;
     }
 
+
     /**
      * Sets login credentials to `newValue`.
      * @param newValue the new login credentials
@@ -168,6 +169,7 @@ public class StepperAppFields {
         loginCredentials = newValue;
     }
 
+
     /**
      * Returns the key
      * @return current contents of the key field
@@ -175,6 +177,7 @@ public class StepperAppFields {
     public String key() {
         return key;
     }
+
 
     /**
      * Sets text to `newKey`. newKey can't be null
@@ -185,6 +188,7 @@ public class StepperAppFields {
         key = newKey;
     }
 
+
     /**
      * Returns the text
      * @return current contents of the text field
@@ -192,6 +196,7 @@ public class StepperAppFields {
     public String text() {
         return text;
     }
+
 
     /**
      * Sets text to `newText`. newText can't be null
@@ -202,6 +207,7 @@ public class StepperAppFields {
         text = newText;
     }
 
+
     /**
      * Returns the thread count
      *
@@ -210,6 +216,7 @@ public class StepperAppFields {
     public int threadCount() {
         return threadCount;
     }
+
 
     /**
      * Sets threadCount to `newThreadCount`.<br><br>
@@ -227,8 +234,6 @@ public class StepperAppFields {
 
         threadCount = newThreadCount;
     }
-
-
 
 
     /**

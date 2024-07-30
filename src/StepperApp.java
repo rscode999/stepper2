@@ -566,7 +566,7 @@ public class StepperApp extends JFrame {
 
 
         //Screen header
-        textHeader = new JLabel("Stepper App v2.3");
+        textHeader = new JLabel("Stepper App v2.4");
         textHeader.setFont(LARGE_FONT);
         constraints.gridx=0;
         constraints.gridy=0;
