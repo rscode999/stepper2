@@ -4,7 +4,11 @@ import javax.swing.*;
  * Does a small portion of a ParsingBoss's work. Cannot have a field that can hold a StepperApp.<br><br>
  *
  * The worker takes the position of the next block and amount of numbers processed so far to determine which piece of the
- * Boss's work to do.
+ * Boss's work to do.<br>
+ *
+ * All private helper methods must continuously check if the Worker is cancelled. If so, the method should return
+ * the empty string, unless the specification states otherwise. Methods that run quickly and in O(1) time, i.e. where its runtime
+ * doesn't depend on the input's length, do not need to check if the Worker is cancelled.
  */
 public class ParsingOperationsWorker extends SwingWorker<String,String> {
 
@@ -18,10 +22,21 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
      */
     private final byte[][] key;
 
+
     /**
      * True if this worker is encrypting its text, false otherwise
      */
     final private boolean encrypting;
+
+    /**
+     * The name of the Worker (mainly for debugging purposes). Can't be null
+     */
+    final private String name;
+
+    /**
+     * The amount of numbers processed so far in the Boss's input string. Can't be negative
+     */
+    final private int numberStart;
 
     /**
      * Allowed values: 0 if including punctuation, 1 if excluding spaces, 2 if alphabetic characters only
@@ -33,15 +48,6 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
      */
     final private int startBlock;
 
-    /**
-     * The amount of numbers processed so far in the Boss's input string. Can't be negative
-     */
-    final private int numbersPreviouslyEncrypted;
-
-    /**
-     * The name of the Worker (mainly for debugging purposes). Can't be null
-     */
-    final private String name;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -51,31 +57,35 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
 
 
     /**
-     * Creates a ParsingOperationsWorker and loads its fields
+     * Creates a ParsingOperationsWorker and loads its fields.
      * @param input the substring it should process. Can't be null
      * @param key the key to process the substring with. Can't be null. No subarrays can be null. All indices must be on [0,25]
      * @param encrypting true if this Worker should encrypt its text, false otherwise
      * @param punctMode 0 if including punctuation, 1 if excluding spaces, 2 if alphabetic characters only
      * @param startBlock where to start processing the input at. Must be at least 0
      * @param numbersPreviouslyEncrypted amount of numbers encrypted so far. Cannot be negative
-     * @param name the name of the Worker
+     * @param name custom name for this Worker, non-null and cannot equal the string "null"
      */
     public ParsingOperationsWorker(String input, byte[][] key, boolean encrypting,
                                    byte punctMode, int startBlock, int numbersPreviouslyEncrypted, String name) {
-        assert input!=null;
-        assert key!=null;
-        assert punctMode>=0 && punctMode<=2;
-        assert startBlock>=0;
-        assert numbersPreviouslyEncrypted>=0;
+
+        if(input==null || key==null) throw new AssertionError("Input text and key cannot be null");
+        if(punctMode<0 || punctMode>2) throw new AssertionError("Punctuation mode out of range");
+        if(startBlock<0) throw new AssertionError("Start block cannot be negative");
+        if(numbersPreviouslyEncrypted<0) throw new AssertionError("Number start position cannot be negative");
+        if(name==null || name.equals("null")) throw new AssertionError("Name cannot be null or equal the string \"null\"");
+
 
         this.input=input;
 
         //Make a deep copy of the key
+        if(key[0]==null) throw new AssertionError("All indices in the key cannot be null");
         this.key = new byte[key.length][key[0].length];
         for(int a=0; a<key.length; a++) {
-            assert key[a] != null;
+            if(key[a]==null) throw new AssertionError("All indices in the key cannot be null");
+
             for(int i=0; i<key[0].length; i++) {
-                assert key[a][i]>=0 && key[a][i]<=25;
+                if(key[a][i]<0 || key[a][i]>25) throw new AssertionError("All indices in the key must be on the interval [0,25]");
                 this.key[a][i] = key[a][i];
             }
         }
@@ -83,7 +93,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
         this.encrypting=encrypting;
         this.punctMode=punctMode;
         this.startBlock=startBlock;
-        this.numbersPreviouslyEncrypted=numbersPreviouslyEncrypted;
+        this.numberStart=numbersPreviouslyEncrypted;
         this.name=name;
     }
 
@@ -97,7 +107,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
     @Override
     public String toString() {
         return "Operations Worker \"" + name + "\", startblock=" + startBlock + ", numberstart="
-                + numbersPreviouslyEncrypted + ", input=\"" + input + "\"";
+                + numberStart + ", input=\"" + input + "\"";
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -120,6 +130,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
         char[] nonAlphas = findNonAlphaPositions(input);
         input = removeNonAlphas(input);
 
+
         //Do process
         String output="";
         if (encrypting) {
@@ -132,12 +143,13 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
         //Reinsert punctuation
         output = recombineNonAlphas(output, nonAlphas, punctMode<=1);
 
+
         //Do the numbers
         if(encrypting) {
-            output = encryptNumbers(output, key, numbersPreviouslyEncrypted);
+            output = encryptNumbers(output, key, numberStart);
         }
         else {
-            output = decryptNumbers(output, key, numbersPreviouslyEncrypted);
+            output = decryptNumbers(output, key, numberStart);
         }
 
         return output;
@@ -149,6 +161,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //FUNCTIONS
 
 
 
@@ -577,7 +590,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
      * Indices 1, 3, and 5 hold the corresponding ASCII value in the corresponding output indices
      *
      * @param text text to find non-alphabetic characters in
-     * @return char array containing locations of non-alphabetic characters
+     * @return char array containing locations of non-alphabetic characters. Returns {(char)0} if the Worker is cancelled.
      */
     private char[] findNonAlphaPositions(String text) {
         if(text==null) {
@@ -621,7 +634,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
      * @param blocks number of blocks encrypted so far, non-negative
      * @return key block positions after encrypting `blocks` blocks
      */
-    public static byte[] initializeKeyBlockPositions(long blocks) {
+    private byte[] initializeKeyBlockPositions(long blocks) {
         assert blocks >= 0;
 
         byte[] output = setKeyBlockPositions(blocks);
@@ -683,6 +696,10 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
         //make defensive copy of nonAlphasIn
         char[] nonAlphas = new char[nonAlphasIn.length];
         for(int t=0; t<nonAlphas.length; t++) {
+            if(isCancelled()) {
+                return "";
+            }
+
             nonAlphas[t]=nonAlphasIn[t];
         }
 
@@ -857,18 +874,17 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
     }
 
 
-
     /**
      * Returns the key block positions for the given text length.<br><br>
      *
      * Important note: this method uses text length, not the number of blocks that are in the text.<br><br>
      *
-     * Helper to initializeKeyBlockPositions.
+     * Helper to initializeKeyBlockPositions and the operation functions.
      *
      * @param textLength length of text (must be at least 0)
      * @return key block positions
      */
-    public static byte[] setKeyBlockPositions(long textLength) {
+    private byte[] setKeyBlockPositions(long textLength) {
         //Check text length: must be non-negative
         if(textLength < 0) throw new AssertionError("Text length cannot be negative");
 
