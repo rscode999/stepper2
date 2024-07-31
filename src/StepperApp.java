@@ -273,7 +273,7 @@ public class StepperApp extends JFrame {
         setScreen("LOGIN");
 
         //Initialize the app window
-        setTitle("Stepper 2 App");
+        setTitle("Java Project");
         setSize(APP_DIMENSIONS);
         setFocusable(true);
         requestFocus();
