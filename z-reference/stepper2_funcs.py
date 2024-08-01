@@ -22,7 +22,7 @@ BLOCK_LENGTH=19 #key matrix "width"
 BLOCK_COUNT=7 #key matrix "height"
 KEY_LENGTH=BLOCK_COUNT*BLOCK_LENGTH
 
-KEY_BLOCK_INCREMENTS = [1,2,3,5,7,11,13]
+KEY_BLOCK_INCREMENTS = [2,3,5,7,11,13,17]
 
 
 #Do idiot checks

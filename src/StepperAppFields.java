@@ -39,7 +39,7 @@ public class StepperAppFields {
     /**
      * Amount to rotate each block. Length must equal BLOCK_COUNT. Must be private. Indices are accessed through a getter method.
      */
-    final private static byte[] KEY_BLOCK_INCREMENTS = {1,2,3,5,7,11,13};
+    final private static byte[] KEY_BLOCK_INCREMENTS = {2,3,5,7,11,13,17};
 
 
     /**
