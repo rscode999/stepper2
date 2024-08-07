@@ -11,8 +11,8 @@ import javax.swing.*;
  * Most of the work is done by a ParsingBoss created in the doInBackground method. This setup allows the Dispatcher to
  * cancel all the Boss's processing instantly.<br>
  *
- * Dispatchers and Bosses share exception messages through the App's key field, accessed with {app}.fields().key() and set
- * with {app}.fields().setKey(). Exception messages always start with "~~~".
+ * Dispatchers and Bosses share signals through the parent App's key field, accessed with {app}.fields().key() and set
+ * with {app}.fields().setKey(). Signals always start with "~~~".
  */
 public class ParsingDispatcher extends SwingWorker<String,String> {
 
@@ -23,7 +23,7 @@ public class ParsingDispatcher extends SwingWorker<String,String> {
     final private StepperApp app;
 
     /**
-     * The thread that will do the Dispatcher's work
+     * The thread that will do the Dispatcher's work.
      */
     private ParsingBoss bossThread;
 
@@ -42,7 +42,7 @@ public class ParsingDispatcher extends SwingWorker<String,String> {
 
     /**
      * The absolute path to the input file. If `filepath` is the empty string, the Boss will take its input from
-     * its parent App's top text input.
+     * its parent App's top text input. Cannot be null
      */
     final private String filepath;
 
@@ -113,6 +113,7 @@ public class ParsingDispatcher extends SwingWorker<String,String> {
             return "";
         }
 
+        bossThread=null;
         app.setOutput(output, app.fields().key());
         return output;
     }
@@ -122,7 +123,7 @@ public class ParsingDispatcher extends SwingWorker<String,String> {
     /**
      * Used to change the screen through the Dispatcher's `app` reference after doInBackground finishes.<br><br>
      *
-     * Before screen changes, the method checks for error messages in the parent App's key field. If so,
+     * Before screen changes, the method checks for error signals in the parent App's key field. If so,
      * the Dispatcher resets the screen.
      */
     @Override

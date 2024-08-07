@@ -11,7 +11,7 @@ public class ParsingDiacriticsWorker extends SwingWorker<String,String> {
     final private String text;
 
     /**
-     * The name of the Worker, mostly for debugging purposes.
+     * The name of the Worker, mostly for debugging purposes. Cannot be null or the string "null".
      */
     final private String name;
 
@@ -69,12 +69,11 @@ public class ParsingDiacriticsWorker extends SwingWorker<String,String> {
 
 
     /**
-     * Returns a lowercase version of the input without accent marks or letter variants.<br><br>
-     * Helper to createBlocks
+     * Returns a lowercase version of the input character without accent marks or letter variants.
      * @param input letter to remove diacritics from
      * @return copy of input without diacritics
      */
-    public static char removeDiacritics(char input) {
+    private char removeDiacritics(char input) {
 
         String a="" + input;
         a=a.toLowerCase();
@@ -120,7 +119,7 @@ public class ParsingDiacriticsWorker extends SwingWorker<String,String> {
      * Any character that is not transformed by the private helper method `removeDiacritics(char)` is not changed.
      *
      * @param input text to remove diacritics from
-     * @return copy of input without diacritics in lowercase letters
+     * @return lowercase version of input without diacritics
      */
     private String removeDiacritics(String input) {
         String output="";

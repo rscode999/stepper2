@@ -8,7 +8,7 @@ import javax.swing.*;
  *
  * All private helper methods must continuously check if the Worker is cancelled. If so, the method should return
  * the empty string, unless the specification states otherwise. Methods that run quickly and in O(1) time, i.e. where its runtime
- * doesn't depend on the input's length, do not need to check if the Worker is cancelled.
+ * doesn't depend on an arbitrary length, do not need to check if the Worker is cancelled.
  */
 public class ParsingOperationsWorker extends SwingWorker<String,String> {
 
@@ -18,7 +18,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
     private String input;
 
     /**
-     * The key to process the input with. Can't be null
+     * The key to process the input with. Can't be null. Dimensions must be `StepperAppFields.BLOCK_COUNT` by `StepperAppFields.BLOCK_LENGTH`.
      */
     private final byte[][] key;
 
@@ -29,14 +29,14 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
     final private boolean encrypting;
 
     /**
-     * The name of the Worker (mainly for debugging purposes). Can't be null
+     * The name of the Worker (mainly for debugging purposes). Can't be null or equal the string "null"
      */
     final private String name;
 
     /**
      * The amount of numbers processed so far in the Boss's input string. Can't be negative
      */
-    final private int numberStart;
+    final private int numberStartIndex;
 
     /**
      * Allowed values: 0 if including punctuation, 1 if excluding spaces, 2 if alphabetic characters only
@@ -59,7 +59,8 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
     /**
      * Creates a ParsingOperationsWorker and loads its fields.
      * @param input the substring it should process. Can't be null
-     * @param key the key to process the substring with. Can't be null. No subarrays can be null. All indices must be on [0,25]
+     * @param key the key to process the substring with. Can't be null. No subarrays can be null.
+     *            All indices must be on [0,25]. Dimensions must be `StepperAppFields.BLOCK_COUNT` by `StepperAppFields.BLOCK_LENGTH`
      * @param encrypting true if this Worker should encrypt its text, false otherwise
      * @param punctMode 0 if including punctuation, 1 if excluding spaces, 2 if alphabetic characters only
      * @param startBlock where to start processing the input at. Must be at least 0
@@ -79,7 +80,10 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
         this.input=input;
 
         //Make a deep copy of the key
+        if(key==null) throw new AssertionError("Key cannot be null");
         if(key[0]==null) throw new AssertionError("All indices in the key cannot be null");
+        if(key.length != StepperAppFields.BLOCK_COUNT || key[0].length != StepperAppFields.BLOCK_LENGTH)
+            throw new AssertionError("Key dimensions must be `StepperAppFields.BLOCK_COUNT` by `StepperAppFields.BLOCK_LENGTH`");
         this.key = new byte[key.length][key[0].length];
         for(int a=0; a<key.length; a++) {
             if(key[a]==null) throw new AssertionError("All indices in the key cannot be null");
@@ -93,7 +97,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
         this.encrypting=encrypting;
         this.punctMode=punctMode;
         this.startBlock=startBlock;
-        this.numberStart=numbersPreviouslyEncrypted;
+        this.numberStartIndex=numbersPreviouslyEncrypted;
         this.name=name;
     }
 
@@ -106,8 +110,8 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
      */
     @Override
     public String toString() {
-        return "Operations Worker \"" + name + "\", startblock=" + startBlock + ", numberstart="
-                + numberStart + ", input=\"" + input + "\"";
+        return "Operations Worker \"" + name + "\", start block=" + startBlock + ", number start index="
+                + numberStartIndex + ", input=\"" + input + "\"";
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -132,27 +136,26 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
 
 
         //Do process
-        String output="";
         if (encrypting) {
-            output = encrypt(input, key, startBlock);
+            input = encrypt(input, key, startBlock);
         }
         else {
-            output = decrypt(input, key, startBlock);
+            input = decrypt(input, key, startBlock);
         }
 
         //Reinsert punctuation
-        output = recombineNonAlphas(output, nonAlphas, punctMode<=1);
+        input = recombineNonAlphas(input, nonAlphas, punctMode<=1);
 
 
         //Do the numbers
         if(encrypting) {
-            output = encryptNumbers(output, key, numberStart);
+            input = encryptNumbers(input, key, numberStartIndex);
         }
         else {
-            output = decryptNumbers(output, key, numberStart);
+            input = decryptNumbers(input, key, numberStartIndex);
         }
 
-        return output;
+        return input;
     }
 
 
@@ -213,7 +216,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
         //////////////////////////
 
         //Configure positions
-        byte[] keyBlockBasePositions= initializeKeyBlockPositions(startBlock + text.length()/StepperAppFields.BLOCK_LENGTH);
+        byte[] keyBlockBasePositions=initializeKeyBlockPositions(startBlock + text.length()/StepperAppFields.BLOCK_LENGTH);
 //        System.out.println(text);
         String output="";
 
@@ -590,7 +593,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
      * Indices 1, 3, and 5 hold the corresponding ASCII value in the corresponding output indices
      *
      * @param text text to find non-alphabetic characters in
-     * @return char array containing locations of non-alphabetic characters. Returns {(char)0} if the Worker is cancelled.
+     * @return char array containing locations of non-alphabetic characters. Returns ['C'] if the Worker is cancelled.
      */
     private char[] findNonAlphaPositions(String text) {
         if(text==null) {
@@ -601,7 +604,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
 
         for(int i=0; i<text.length(); i++) {
             if(isCancelled()) {
-                return new char[(char)0];
+                return new char['C'];
             }
 
             if((int)text.charAt(i)<65
@@ -629,7 +632,9 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
      * if the input was `blocks` blocks long<br><br>
      *
      * `blocks` should equal the number of blocks before the starting position.<br>
-     * Example: if `blocks` equals 4, the output would be the block positions just after encrypting 4 blocks.
+     * Example: if `blocks` equals 4, the output would be the block positions just after encrypting 4 blocks.<br><br>
+     *
+     * Helper to the operation functions.
      *
      * @param blocks number of blocks encrypted so far, non-negative
      * @return key block positions after encrypting `blocks` blocks
@@ -890,9 +895,6 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
 
         //Set the output array, assign all empty space to 0
         byte[] result = new byte[StepperAppFields.BLOCK_COUNT];
-        for(int s=0; s<result.length; s++) {
-            result[s]=0;
-        }
 
         long quotient=textLength;
         double decimalPortion=0;
@@ -915,14 +917,12 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
             //Divide quotient and keep only the portion to the left of the decimal point
             quotient = quotient / (long)StepperAppFields.BLOCK_LENGTH;
 
-
             //Convert the decimal portion to a digit and add to the result
             result[i] = (byte)(Math.round(decimalPortion*StepperAppFields.BLOCK_LENGTH));
 
             if(quotient <= 0) {
                 break;
             }
-
         }
 
         //Reverse the output

@@ -11,7 +11,11 @@ import java.util.concurrent.ExecutionException;
  * Created by a ParsingDispatcher to process the Dispatcher's input.<br><br>
  *
  * Dispatchers and Workers share exception messages through the App's key field, accessed with {app}.fields().key() and set
- * with {app}.fields().setKey(). Exception messages always start with "~~~".
+ * with {app}.fields().setKey(). Exception messages always start with "~~~".<br>
+ *
+ * All private helper methods must continuously check if the Boss is cancelled. If so, the method should return
+ * the empty string, unless the specification states otherwise. Methods that run quickly and in O(1) time, i.e. where its runtime
+ * doesn't depend on an arbitrary input length, do not need to check if the Boss is cancelled.
  */
 public class ParsingBoss extends SwingWorker<String,String> {
 
@@ -453,9 +457,9 @@ public class ParsingBoss extends SwingWorker<String,String> {
      * If the input filepath does not end in ".txt" or the file could not be read, throws a FileNotFoundException.<br>
      *
      * @param filepath name of the input file. Can't be null
-     * @return contents from the given input filename
+     * @return contents from the given input filename, or the empty string if the Boss is cancelled
      * @throws FileNotFoundException if the file can't be read or the filename lacks the ".txt" extension.
-     * Displays a descriptive error message if thrown.
+     * Displays a descriptive error message, which is used in the main App, if thrown.
      */
     private String getTextFromFile(String filepath) throws FileNotFoundException {
         if(filepath==null) {
@@ -485,6 +489,10 @@ public class ParsingBoss extends SwingWorker<String,String> {
                 Scanner fileReader = new Scanner(inputFile);
 
                 while (fileReader.hasNextLine()) {
+                    if(isCancelled()) {
+                        return "";
+                    }
+
                     output += fileReader.nextLine();
                     output += "\n";
                 }
@@ -638,7 +646,7 @@ public class ParsingBoss extends SwingWorker<String,String> {
             return new String[] {""};
         }
 
-        //Load each String with blockSize characters until the end is reached
+        //Load each String with characters until the end is reached
         int currentBlock = 0;
         alphaChars = 0;
         for (int i = 0; i < text.length(); i ++) {
