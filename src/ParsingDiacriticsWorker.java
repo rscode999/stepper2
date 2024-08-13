@@ -17,7 +17,7 @@ public class ParsingDiacriticsWorker extends SwingWorker<String,String> {
 
 
     /**
-     * Creates a ParsingDiacriticsWorker and loads it with `text`
+     * Creates a ParsingDiacriticsWorker called `name` and loads it with `text`
      * @param text String to remove diacritics from, non-null
      * @param name custom name for this Worker, non-null and cannot equal the string "null"
      */

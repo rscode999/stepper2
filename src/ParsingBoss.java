@@ -10,14 +10,13 @@ import java.util.concurrent.ExecutionException;
 /**
  * Created by a ParsingDispatcher to process the Dispatcher's input.<br><br>
  *
- * Dispatchers and Workers share exception messages through the App's key field, accessed with {app}.fields().key() and set
- * with {app}.fields().setKey(). Exception messages always start with "~~~".<br>
+ * Dispatchers and Workers share messages through the Boss's input error message field.<br>
  *
  * All private helper methods must continuously check if the Boss is cancelled. If so, the method should return
  * the empty string, unless the specification states otherwise. Methods that run quickly and in O(1) time, i.e. where its runtime
  * doesn't depend on an arbitrary input length, do not need to check if the Boss is cancelled.
  */
-public class ParsingBoss extends SwingWorker<String,String> {
+public class ParsingBoss extends SwingWorker<Void,Void> {
 
     /**
      * The worker threads that this Boss employs. The array's length may vary depending on the number of threads used
@@ -27,7 +26,7 @@ public class ParsingBoss extends SwingWorker<String,String> {
 
     /**
      * The parent app that the Boss works for.
-     * This reference is needed so the Boss can change the app's screen and its variable fields. Can't be null
+     * This reference is needed so the Boss can change the app's screen and variable fields. Can't be null
      */
     final private StepperApp app;
 
@@ -49,6 +48,12 @@ public class ParsingBoss extends SwingWorker<String,String> {
      */
     final private byte punctMode;
 
+
+
+    /**
+     * Holds any input error messages that might occur during the input loading. Holds the empty string if there are no errors
+     */
+    private String inputErrorMessage = "";
 
 
     /**
@@ -76,7 +81,7 @@ public class ParsingBoss extends SwingWorker<String,String> {
     }
 
     /**
-     * WARNING! USE ONLY WHEN TESTING METHODS! Creates a new ParsingBoss, but initializes fields against operation preconditions.
+     * WARNING! USE ONLY IN METHOD UNIT TESTS!!! Creates a new ParsingBoss, but initializes fields against operation preconditions.
      */
     public ParsingBoss() {
         this.app=null;
@@ -85,6 +90,22 @@ public class ParsingBoss extends SwingWorker<String,String> {
         this.filepath=null;
     }
 
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    /**
+     * Returns the input error message. The value returned is the empty string if there is no error message
+     * @return the input error message
+     */
+    public String inputErrorMessage() {
+        //Idiot check
+        if(inputErrorMessage == null) {
+            throw new AssertionError("Input error message cannot be null");
+        }
+
+        return inputErrorMessage;
+    }
 
 
     /**
@@ -105,26 +126,30 @@ public class ParsingBoss extends SwingWorker<String,String> {
             workers += workerThreads.length;
         }
 
-        return "Boss with " + workers + " workers, input=\"" + app.fields().text() + "\", key=\"" + app.fields().key() +
-                "\", encrypting=" + encrypting + ", punctuation=" + punctMode;
+        return "Boss with " + workers + " workers, encrypting=" + encrypting + ", filepath=\"" + filepath + "\", punctuation=" + punctMode
+                + ", app key=\"" + app.fields().key() + "\"";
     }
 
 
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
     /**
-     * Returns the result of the Boss's processing.
-     * Also sets the App's output when finished and periodically updates the App's progress text.<br><br>
+     * Loads the result of the Boss's processing into the parent App.
+     * Also loads the App's fields with the result and periodically updates the App's progress text.<br><br>
      *
-     * By the end of this method, the parent App's fields (i.e. app.fields()) should be updated with the results.<br>
+     * The parent App's fields (i.e. app.fields()) should be continually updated with the results. The fields may be
+     * used to store intermediate values. By the end of the method, the fields should be loaded with the results.<br>
+     *
      * If this method throws an exception, excluding exceptions thrown when interrupted, the method will
-     * load the App's key field with an error message, which will be interpreted by the Dispatcher that uses this Boss.
-     * Error messages always start with "~~~".<br><br>
+     * load the Boss's input error message field with a descriptive error message. The message will be displayed by a
+     * Dispatcher.<br><br>
      *
      * WARNING: Any exceptions thrown in this method are SILENT. They will not stop the program and produce no error messages.
-     *
-     * @return the Boss's results. This method should NEVER return null.
      */
     @Override
-    protected String doInBackground() throws Exception {
+    protected Void doInBackground() {
         //Idiot check
         if(app==null) {
             throw new AssertionError("App reference cannot be null");
@@ -140,25 +165,28 @@ public class ParsingBoss extends SwingWorker<String,String> {
         //Switch the screen
         app.setScreen("PROCESSING");
 
-        //Take the input, depending on if loading from text or file
+
+        //Load the input into the parent app's fields, depending on if loading from text or file
         try {
             if (filepath.equals(StepperAppFields.TEXT_LOAD_SIGNAL)) {
                 app.fields().setText(app.topInputValue());
-            } else {
+            }
+            else {
                 app.fields().setText(getTextFromFile(filepath));
             }
         }
+        //If something goes wrong, set the error message for the Dispatcher and return early
         catch(FileNotFoundException e) {
-            app.fields().setKey(StepperAppFields.INPUT_ERROR_SIGNAL + e.getMessage());
-            return "";
+            inputErrorMessage = e.getMessage();
+            return null;
         }
         catch(Throwable t) {
-            app.fields().setKey(StepperAppFields.INPUT_ERROR_SIGNAL + "Exception at text loading- " + t);
-            return "";
+           inputErrorMessage = "Exception during text loading- " + t;
+            return null;
         }
 
 
-        //Set local copies of the inputs
+        //Set local copies of the inputs that were just put into the app's fields
         String text = app.fields().text();
         String inputKey = app.fields().key();
 
@@ -192,11 +220,15 @@ public class ParsingBoss extends SwingWorker<String,String> {
                 textPieces[i] = workerThreads[i].get();
             }
         }
-        catch (ExecutionException | InterruptedException e) {
+        catch (InterruptedException e) {
             for (int i = 0; i < workerThreads.length; i++) {
                 workerThreads[i].cancel(true);
             }
-            return "";
+            return null;
+        }
+        catch (Exception e) {
+            System.err.println("Exception during formatting- " + e);
+            return null;
         }
 
         //Reload the text with the results
@@ -215,8 +247,6 @@ public class ParsingBoss extends SwingWorker<String,String> {
 
         //Format the key
         byte[][] operationsKey = createKeyBlocks(inputKey, StepperAppFields.BLOCK_COUNT, StepperAppFields.BLOCK_LENGTH);
-        //Load formatted key into app
-        app.fields().setKey(arrToString(operationsKey));
 
 
         //Create loads
@@ -229,8 +259,7 @@ public class ParsingBoss extends SwingWorker<String,String> {
         int startingBlock = 0;
         int numberCount = 0;
         for (int i = 0; i < workerThreads.length; i++) {
-            workerThreads[i] = new ParsingOperationsWorker(textPieces[i], operationsKey,
-                    encrypting, punctMode, startingBlock, numberCount, Integer.toString(i));
+            workerThreads[i] = new ParsingOperationsWorker(textPieces[i], operationsKey, encrypting, punctMode, startingBlock, numberCount, Integer.toString(i));
 
             int[] charCounts = countAlphaAndNumericChars(textPieces[i]);
             startingBlock += charCounts[0] / StepperAppFields.BLOCK_LENGTH;
@@ -258,12 +287,17 @@ public class ParsingBoss extends SwingWorker<String,String> {
                 textPieces[i] = workerThreads[i].get();
             }
         }
-        catch (ExecutionException | InterruptedException e) {
+        catch (InterruptedException e) {
             for (int i = 0; i < workerThreads.length; i++) {
                 workerThreads[i].cancel(true);
             }
-            return "";
+            return null;
         }
+        catch (Exception e) {
+            System.err.println("Error during execution- " + e);
+            return null;
+        }
+
 
 
         workerThreads = null;
@@ -274,13 +308,14 @@ public class ParsingBoss extends SwingWorker<String,String> {
         for (int i = 0; i < textPieces.length; i++) {
             text += textPieces[i];
         }
-
-
         textPieces = null;
+
+
         app.fields().setText(text);
+        app.fields().setKey(arrToString(operationsKey));
 
         //Screen changing occurs in the ParsingDispatcher that created this Boss
-        return text;
+        return null;
     }
 
 
@@ -690,5 +725,19 @@ public class ParsingBoss extends SwingWorker<String,String> {
         }
 
         return output;
+    }
+
+
+    /**
+     * Returns the value that setWorkerLoads returns.<br><br>
+     *
+     * For unit testing purposes only!
+     * @param input input string to test
+     * @param threads thread count to test
+     * @param blockLength block length to test
+     * @return return value of setWorkerLoads
+     */
+    public String[] setWorkerLoads_Testing(String input, int threads, int blockLength) {
+        return setWorkerLoads(input, threads, blockLength);
     }
 }

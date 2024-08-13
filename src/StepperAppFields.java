@@ -27,17 +27,6 @@ public class StepperAppFields {
 
 
     /**
-     * Placed into an App's key field (through app.fields().setKey(...)), followed by an error message,
-     * by a ParsingBoss if the Boss encounters an error caused by user input.<br><br>
-     *
-     * If detected in an App's key field, the parent ParsingDispatcher should stop its processing, return to the input screen, and
-     * display an error message.<br>
-     * Cannot equal the empty string or the text load signal.
-     */
-    final public static String INPUT_ERROR_SIGNAL = "~~~IN";
-
-
-    /**
      * Amount to rotate each block. Length must equal BLOCK_COUNT. Must be private. Indices are accessed through a getter method.
      */
     final private static byte[] KEY_BLOCK_INCREMENTS = {2,3,5,7,11,13,17};
@@ -52,8 +41,7 @@ public class StepperAppFields {
     /**
      * When given to a ParsingBoss as a filename, this load signal tells the Boss to take its input from a text field
      * instead of from a file.<br><br>
-     * Cannot be the empty string because empty strings trigger loading from the default input file.<br>
-     * Cannot equal the input error signal.
+     * Cannot be the empty string because empty strings trigger loading from the default input file.
      */
     final public static String TEXT_LOAD_SIGNAL = "~~~TEXT";
 
@@ -130,10 +118,6 @@ public class StepperAppFields {
         if(DEFAULT_INPUT_FILE==null
         || DEFAULT_INPUT_FILE.length()<4
         || DEFAULT_INPUT_FILE.endsWith(".txt")==false) throw new AssertionError("Default input file must end in \".txt\"");
-
-        if(INPUT_ERROR_SIGNAL==null
-        || INPUT_ERROR_SIGNAL.equals("")
-        || INPUT_ERROR_SIGNAL.equals(TEXT_LOAD_SIGNAL)) throw new AssertionError("Input error signal cannot be null, the empty string, or the same as the text load signal");
 
         if(KEY_BLOCK_INCREMENTS==null
         || KEY_BLOCK_INCREMENTS.length != BLOCK_COUNT) throw new AssertionError("Key block increment array length must equal the block count");

@@ -44,7 +44,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
     final private byte punctMode;
 
     /**
-     * The block number in the Boss's input string. Can't be negative
+     * The text block number in the Boss's input string. Can't be negative
      */
     final private int startBlock;
 
@@ -64,26 +64,25 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
      * @param encrypting true if this Worker should encrypt its text, false otherwise
      * @param punctMode 0 if including punctuation, 1 if excluding spaces, 2 if alphabetic characters only
      * @param startBlock where to start processing the input at. Must be at least 0
-     * @param numbersPreviouslyEncrypted amount of numbers encrypted so far. Cannot be negative
+     * @param numbersPreviouslyProcessed amount of numbers encrypted so far. Cannot be negative
      * @param name custom name for this Worker, non-null and cannot equal the string "null"
      */
     public ParsingOperationsWorker(String input, byte[][] key, boolean encrypting,
-                                   byte punctMode, int startBlock, int numbersPreviouslyEncrypted, String name) {
-
-        if(input==null || key==null) throw new AssertionError("Input text and key cannot be null");
-        if(punctMode<0 || punctMode>2) throw new AssertionError("Punctuation mode out of range");
-        if(startBlock<0) throw new AssertionError("Start block cannot be negative");
-        if(numbersPreviouslyEncrypted<0) throw new AssertionError("Number start position cannot be negative");
-        if(name==null || name.equals("null")) throw new AssertionError("Name cannot be null or equal the string \"null\"");
+                                   byte punctMode, int startBlock, int numbersPreviouslyProcessed, String name) {
+//        if(input==null || key==null) throw new AssertionError("Input text and key cannot be null");
+//        if(punctMode<0 || punctMode>2) throw new AssertionError("Punctuation mode out of range");
+//        if(startBlock<0) throw new AssertionError("Start block cannot be negative");
+//        if(numbersPreviouslyProcessed<0) throw new AssertionError("Amount of numbers previously processed cannot be negative");
+//        if(name==null || name.equals("null")) throw new AssertionError("Name cannot be null or equal the string \"null\"");
 
 
         this.input=input;
 
         //Make a deep copy of the key
-        if(key==null) throw new AssertionError("Key cannot be null");
         if(key[0]==null) throw new AssertionError("All indices in the key cannot be null");
         if(key.length != StepperAppFields.BLOCK_COUNT || key[0].length != StepperAppFields.BLOCK_LENGTH)
             throw new AssertionError("Key dimensions must be `StepperAppFields.BLOCK_COUNT` by `StepperAppFields.BLOCK_LENGTH`");
+
         this.key = new byte[key.length][key[0].length];
         for(int a=0; a<key.length; a++) {
             if(key[a]==null) throw new AssertionError("All indices in the key cannot be null");
@@ -97,8 +96,55 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
         this.encrypting=encrypting;
         this.punctMode=punctMode;
         this.startBlock=startBlock;
-        this.numberStartIndex=numbersPreviouslyEncrypted;
+        this.numberStartIndex=numbersPreviouslyProcessed;
         this.name=name;
+
+        assertPreconditions();
+    }
+
+    /**
+     * FOR UNIT TESTING ONLY!!! Creates a new OperationsWorker and initializes its fields with garbage values.
+     * BREAKS OPERATION PRECONDITIONS!
+     */
+    public ParsingOperationsWorker() {
+        input=null;
+        key=null;
+        encrypting=false;
+        name=null;
+        numberStartIndex=-420;
+        punctMode=-69;
+        startBlock=-69;
+    }
+
+
+    /**
+     * Checks operation preconditions. If a precondition is broken, this method throws an AssertionError with a detailed error message.<br><br>
+     *
+     * Helper to the class constructor not used in method unit testing.
+     */
+    private void assertPreconditions() {
+        if(input==null || key==null) throw new AssertionError("Input text and key cannot be null");
+        if(punctMode<0 || punctMode>2) throw new AssertionError("Punctuation mode out of range");
+        if(startBlock<0) throw new AssertionError("Start block cannot be negative");
+        if(numberStartIndex<0) throw new AssertionError("Number start index cannot be negative");
+        if(name==null || name.equals("null")) throw new AssertionError("Name cannot be null or equal the string \"null\"");
+
+        if(key[0]==null) {
+            throw new AssertionError("All indices in the key cannot be null");
+        }
+        if(key.length != StepperAppFields.BLOCK_COUNT || key[0].length != StepperAppFields.BLOCK_LENGTH) {
+            throw new AssertionError("Key dimensions must be `StepperAppFields.BLOCK_COUNT` by `StepperAppFields.BLOCK_LENGTH`");
+        }
+        for(int a=0; a<key.length; a++) {
+            if(key[a]==null) {
+                throw new AssertionError("All indices in the key cannot be null");
+            }
+            for(int i=0; i<key[0].length; i++) {
+                if(key[a][i]<0 || key[a][i]>25) {
+                    throw new AssertionError("All indices in the key must be on the interval [0,25]");
+                }
+            }
+        }
     }
 
 
@@ -115,6 +161,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * Returns the result of the Worker's processing.<br><br>
@@ -125,6 +172,8 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
      */
     @Override
     protected String doInBackground() {
+        //Idiot check
+        assertPreconditions();
 
         //Remove non-alphabetic characters
         if(encrypting && punctMode==1) {
@@ -282,8 +331,6 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
                 }
             }
 
-//            System.out.println(Arrays.toString(keyBlockPositions));
-
             for(int s=0; s<keyBlockReadPositions.length; s++) {
                 keyBlockReadPositions[s]=keyBlockBasePositions[s];
             }
@@ -381,7 +428,6 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
 
                 currentInputChar += 48;
 
-                //Move to the next index in the key, or go back to the beginning if it overflowed
                 keyIndex++;
                 if(keyIndex >= flattenedKey.length()) {
                     keyIndex = 0;
@@ -452,7 +498,6 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
             keyBlockReadPositions[s] = keyBlockBasePositions[s];
         }
 
-//        System.out.println(Arrays.toString(keyBlockBasePositions) + " " + text);
 
         String output="";
         int currentChar=0;
@@ -484,8 +529,6 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
                     }
                 }
             }
-
-//            System.out.println(Arrays.toString(keyBlockBasePositions));
 
             for(int r=0; r<keyBlockBasePositions.length; r++) {
                 keyBlockBasePositions[r] = (byte) ((keyBlockBasePositions[r] + StepperAppFields.getKeyBlockIncrementIndex(r)) % StepperAppFields.BLOCK_LENGTH);

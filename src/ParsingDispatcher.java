@@ -3,18 +3,15 @@ import javax.swing.*;
 /**
  * A SwingWorker that processes a given input string with a ParsingBoss.<br><br>
  *
- * Most of a Dispatcher's work is to pass its input to a ParsingBoss, execute the Boss, and take the Boss's output.
+ * -Most of a Dispatcher's work is to pass its input to a ParsingBoss, execute the Boss, and take the Boss's output.
+ * This setup allows the Dispatcher to cancel all the Boss's processing instantly.<br>
  *
- * StringParserDispatchers and StringParserBosses take references to the main StepperModel because they are responsible for screen changes.<br>
- * Each StepperApp should contain exactly one ParsingDispatcher.<br>
+ * -ParsingDispatchers and ParsingBosses take references to the main StepperApp because they are responsible for
+ * screen changes and app attribute updates.<br>
  *
- * Most of the work is done by a ParsingBoss created in the doInBackground method. This setup allows the Dispatcher to
- * cancel all the Boss's processing instantly.<br>
- *
- * Dispatchers and Bosses share signals through the parent App's key field, accessed with {app}.fields().key() and set
- * with {app}.fields().setKey(). Signals always start with "~~~".
+ * -Dispatchers and Bosses share error messages through the Boss's error message field.
  */
-public class ParsingDispatcher extends SwingWorker<String,String> {
+public class ParsingDispatcher extends SwingWorker<Void,Void> {
 
     /**
      * The parent app that the Boss works for.
@@ -45,6 +42,13 @@ public class ParsingDispatcher extends SwingWorker<String,String> {
      * its parent App's top text input. Cannot be null
      */
     final private String filepath;
+
+
+    /**
+     * The result of the Boss's processing, assigned where the Dispatcher's doInBackground method would normally return a value.
+     * Cannot be null
+     */
+    String result = "";
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -89,33 +93,30 @@ public class ParsingDispatcher extends SwingWorker<String,String> {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * Returns the result of the Dispatcher's processing, or an empty string if cancelled.<br><br>
-     *
-     * If execution is unexpectedly stopped, the method returns the empty string (not null).<br><br>
+     * Puts the result of the Dispatcher's processing, or an empty string if cancelled, into `result`.<br><br>
      *
      * WARNING: Any exceptions thrown in this method are SILENT. They will not stop the program and produce no error messages.
-     *
-     * @return the result of the processing
      */
     @Override
-    protected String doInBackground() {
+    protected Void doInBackground() {
         String output = "";
+
+        //Wait for the Boss's output
         try {
             bossThread = new ParsingBoss(app,encrypting,punctMode,filepath);
             bossThread.execute();
-            output = bossThread.get();
+            bossThread.get();
         }
         catch (Throwable t) {
-            System.out.println("Exception thrown in Dispatcher thread: " + t);
+            System.out.println("Exception thrown in Dispatcher thread- " + t);
 
             //Important: must cancel the boss thread
             bossThread.cancel(true);
-            return "";
+            return null;
         }
 
-        bossThread=null;
-        app.setOutput(output, app.fields().key());
-        return output;
+        //The Boss should have updated the App's result fields with the formatted results
+        return null;
     }
 
 
@@ -124,7 +125,7 @@ public class ParsingDispatcher extends SwingWorker<String,String> {
      * Used to change the screen through the Dispatcher's `app` reference after doInBackground finishes.<br><br>
      *
      * Before screen changes, the method checks for error signals in the parent App's key field. If so,
-     * the Dispatcher resets the screen.
+     * the Dispatcher resets the screen and displays an error dialog with the App as the dialog's parent object.
      */
     @Override
     protected void done() {
@@ -133,19 +134,22 @@ public class ParsingDispatcher extends SwingWorker<String,String> {
             app.setScreen("INPUT");
         }
         else {
-            //Check for exception messages in the load. If so, present an error dialog
-            if(app.fields().key().startsWith( StepperAppFields.INPUT_ERROR_SIGNAL)) {
-                System.out.println("Error detected");
+            //Check for error messages in the load. If so, present an error dialog
+            if(!(bossThread.inputErrorMessage().isEmpty())) {
+                System.out.println("Input error detected");
                 app.setScreen("INPUT");
 
-                JOptionPane.showMessageDialog(app, app.fields().key().substring( StepperAppFields.INPUT_ERROR_SIGNAL.length() ),
+                JOptionPane.showMessageDialog(app, bossThread.inputErrorMessage(),
                         "Load error", JOptionPane.ERROR_MESSAGE);
             }
-            //Otherwise, show the results
+            //Otherwise, set and show the results
             else {
+                app.setOutput(app.fields().text(), app.fields().key()); //note: the Boss already loaded a formatted key into the app's key field
                 System.out.println("Main execution thread finished");
                 app.setScreen("RESULTS");
             }
         }
+
+        bossThread = null;
     }
 }

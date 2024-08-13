@@ -343,6 +343,16 @@ public class StepperApp extends JFrame {
     }
 
 
+
+    /**
+     * Sets the loading status text to `newText`.
+     *
+     * @param newText what to display on the loading text
+     */
+    public void setLoadingStatusText(String newText) {
+        loadingStatusText.setText(newText);
+    }
+
     /**
      * Sets the text and key output to hold `text` and `key`, respectively
      *
@@ -354,15 +364,6 @@ public class StepperApp extends JFrame {
         outputKey.setText(key);
     }
 
-
-    /**
-     * Sets the loading status text to `newText`.
-     *
-     * @param newText what to display on the loading text
-     */
-    public void setLoadingStatusText(String newText) {
-        loadingStatusText.setText(newText);
-    }
 
 
     /**
@@ -798,7 +799,9 @@ public class StepperApp extends JFrame {
         enterButton.addActionListener(event -> {
 
             //Set input preferences. Text loading is done in the Boss thread
-            String filename = StepperAppFields.TEXT_LOAD_SIGNAL;
+
+            String filename = StepperAppFields.TEXT_LOAD_SIGNAL; //Signal to the Boss thread (made by a Dispatcher) to take input from a text input
+            //Set filename to load from if selected by the user. Invalid filenames are handled by the Boss thread
             if(inputModeSelector.getSelectedItem().equals(INPUT_SELECTION_OPTIONS[2])) {
                 filename = textInputTop.getText();
 
@@ -807,6 +810,7 @@ public class StepperApp extends JFrame {
                     filename = "";
                 }
             }
+
 
             //Load key
             fields.setKey(textInputBottom.getText());
