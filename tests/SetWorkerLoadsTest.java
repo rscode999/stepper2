@@ -42,7 +42,7 @@ public class SetWorkerLoadsTest {
      * @param result output from test
      */
     public void printAssert(String[] expected, String[] result) {
-        if (arrayEquals(expected, result) == false) {
+        if (!arrayEquals(expected, result)) {
             System.err.println("Expected: " + Arrays.toString(expected));
             System.err.println("Result: " + Arrays.toString(result));
             throw new AssertionError("Test failed- Expected and result are not equal");

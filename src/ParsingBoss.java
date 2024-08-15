@@ -151,16 +151,12 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
     @Override
     protected Void doInBackground() {
         //Idiot check
-        if(app==null) {
+        if(app==null
+        || !(punctMode>=0 && punctMode<=2)
+        || filepath==null) {
+            System.err.println("WARNING: OPERATION PRECONDITIONS ARE NOT MET");
             throw new AssertionError("App reference cannot be null");
         }
-        if(!(punctMode>=0 && punctMode<=2)) {
-            throw new AssertionError("Punctuation mode out of valid range");
-        }
-        if(filepath==null) {
-            throw new AssertionError("Filepath cannot be null");
-        }
-
 
         //Switch the screen
         app.setScreen("PROCESSING");

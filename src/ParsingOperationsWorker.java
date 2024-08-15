@@ -118,7 +118,8 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
 
 
     /**
-     * Checks operation preconditions. If a precondition is broken, this method throws an AssertionError with a detailed error message.<br><br>
+     * Checks operation preconditions.
+     * If a precondition is broken, this method throws an AssertionError with a detailed error message.<br><br>
      *
      * Helper to the class constructor not used in method unit testing.
      */
@@ -173,7 +174,13 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
     @Override
     protected String doInBackground() {
         //Idiot check
-        assertPreconditions();
+        try {
+            assertPreconditions();
+        }
+        catch (AssertionError e) {
+            System.err.println("WARNING: OPERATION PRECONDITIONS ARE FALSE");
+            throw new AssertionError();
+        }
 
         //Remove non-alphabetic characters
         if(encrypting && punctMode==1) {
