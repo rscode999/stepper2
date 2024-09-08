@@ -122,15 +122,15 @@ public class ParsingDiacriticsWorker extends SwingWorker<String,String> {
      * @return lowercase version of input without diacritics
      */
     private String removeDiacritics(String input) {
-        String output="";
+        StringBuilder output = new StringBuilder(input.length());
         for(int i=0; i<input.length(); i++) {
             if(this.isCancelled()) {
                 return "";
             }
 
-            output += removeDiacritics(input.charAt(i));
+            output.append(removeDiacritics(input.charAt(i)));
         }
-        return output;
+        return output.toString();
     }
 
 }

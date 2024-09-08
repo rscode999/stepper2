@@ -69,12 +69,6 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
      */
     public ParsingOperationsWorker(String input, byte[][] key, boolean encrypting,
                                    byte punctMode, int startBlock, int numbersPreviouslyProcessed, String name) {
-//        if(input==null || key==null) throw new AssertionError("Input text and key cannot be null");
-//        if(punctMode<0 || punctMode>2) throw new AssertionError("Punctuation mode out of range");
-//        if(startBlock<0) throw new AssertionError("Start block cannot be negative");
-//        if(numbersPreviouslyProcessed<0) throw new AssertionError("Amount of numbers previously processed cannot be negative");
-//        if(name==null || name.equals("null")) throw new AssertionError("Name cannot be null or equal the string \"null\"");
-
 
         this.input=input;
 
@@ -177,9 +171,9 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
         try {
             assertPreconditions();
         }
-        catch (AssertionError e) {
-            System.err.println("WARNING: OPERATION PRECONDITIONS ARE FALSE");
-            throw new AssertionError();
+        catch (Throwable t) {
+            System.err.println("WARNING: OPERATION PRECONDITIONS BROKEN");
+            throw t;
         }
 
         //Remove non-alphabetic characters
@@ -272,19 +266,19 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
         //////////////////////////
 
         //Configure positions
-        byte[] keyBlockBasePositions=initializeKeyBlockPositions(startBlock + text.length()/StepperAppFields.BLOCK_LENGTH);
+        byte[] keyBlockBasePositions=initializeKeyBlockPositions(startBlock + text.length()/ StepperAppFields.BLOCK_LENGTH);
 //        System.out.println(text);
-        String output="";
+        StringBuilder output = new StringBuilder(text.length());
 
         int currentChar=0;
-        int currentBlock = (startBlock + text.length()/StepperAppFields.BLOCK_LENGTH);
+        int currentBlock = (startBlock + text.length()/ StepperAppFields.BLOCK_LENGTH);
 
         byte[] keyBlockReadPositions=new byte[StepperAppFields.BLOCK_COUNT];
         for(int s=0; s<keyBlockReadPositions.length; s++) {
             keyBlockReadPositions[s]=keyBlockBasePositions[s];
         }
 
-        for(int m=0; m<(text.length() % StepperAppFields.BLOCK_LENGTH); m++) {
+        for(int m = 0; m<(text.length() % StepperAppFields.BLOCK_LENGTH); m++) {
             for(int a=0; a<keyBlockReadPositions.length; a++) {
                 keyBlockReadPositions[a]++;
                 if(keyBlockReadPositions[a] >= StepperAppFields.BLOCK_LENGTH) {
@@ -297,7 +291,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
             return "";
         }
 
-        for(int t=text.length()-1; t>=text.length()-(text.length() % StepperAppFields.BLOCK_LENGTH); t--) {
+        for(int t = text.length()-1; t>=text.length()-(text.length() % StepperAppFields.BLOCK_LENGTH); t--) {
 
             for(int d=0; d<keyBlockReadPositions.length; d++) {
                 keyBlockReadPositions[d] -= 1;
@@ -314,18 +308,18 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
                 }
             }
 
-            output=output + (char)(currentChar+97);
+            output.append((char)(currentChar+97));
 
         }
 
 
-        for(int b=text.length()-(text.length() % StepperAppFields.BLOCK_LENGTH)-1; b>=0; b-=StepperAppFields.BLOCK_LENGTH) {
+        for(int b = text.length()-(text.length() % StepperAppFields.BLOCK_LENGTH)-1; b>=0; b-= StepperAppFields.BLOCK_LENGTH) {
             if(isCancelled()) {
                 return "";
             }
 
             currentBlock--;
-            if((currentBlock+1)%StepperAppFields.BLOCK_LENGTH==0) {
+            if((currentBlock+1)% StepperAppFields.BLOCK_LENGTH==0) {
                 keyBlockBasePositions = setKeyBlockPositions(currentBlock);
             }
 
@@ -342,12 +336,12 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
                 keyBlockReadPositions[s]=keyBlockBasePositions[s];
             }
 
-            for(int t=b; t>b-StepperAppFields.BLOCK_LENGTH; t--) {
+            for(int t = b; t>b- StepperAppFields.BLOCK_LENGTH; t--) {
 
                 for(int d=0; d<keyBlockReadPositions.length; d++) {
                     keyBlockReadPositions[d]--;
                     if(keyBlockReadPositions[d] < 0) {
-                        keyBlockReadPositions[d]=StepperAppFields.BLOCK_LENGTH-1;
+                        keyBlockReadPositions[d]= StepperAppFields.BLOCK_LENGTH-1;
                     }
                 }
 
@@ -362,19 +356,15 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
 
                 }
 
-                output=output + (char)(currentChar+97);
+                output.append((char)(currentChar+97));
 
             }
         }
 
         //Reverse the output (the decryption process will make the text turn out backwards)
-        String reversedOutput="";
-        for(int rev=0; rev<output.length(); rev++) {
-            reversedOutput=reversedOutput + output.charAt( output.length()-1-rev );
-        }
-        output=null;
+        output.reverse();
 
-        return reversedOutput;
+        return output.toString();
     }
 
 
@@ -408,7 +398,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
             }
         }
 
-        String output="";
+        StringBuilder output = new StringBuilder(input.length());
 
         int currentInputChar;
         int keyIndex = numbersPreviouslyDecrypted % flattenedKey.length();
@@ -441,10 +431,10 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
                 }
             }
 
-            output += (char)currentInputChar;
+            output.append((char)currentInputChar);
         }
 
-        return output;
+        return output.toString();
     }
 
 
@@ -506,11 +496,11 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
         }
 
 
-        String output="";
+        StringBuilder output = new StringBuilder(text.length());
         int currentChar=0;
         int blocksEncrypted = startBlocks;
 
-        for(int b=0; b<=text.length()-StepperAppFields.BLOCK_LENGTH; b+=StepperAppFields.BLOCK_LENGTH) {
+        for(int b = 0; b<=text.length()- StepperAppFields.BLOCK_LENGTH; b+= StepperAppFields.BLOCK_LENGTH) {
             if(isCancelled()) {
                 return "";
             }
@@ -519,7 +509,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
                 keyBlockReadPositions[pos] = keyBlockBasePositions[pos];
             }
 
-            for(int t=b; t<(b+StepperAppFields.BLOCK_LENGTH); t++) {
+            for(int t = b; t<(b+ StepperAppFields.BLOCK_LENGTH); t++) {
 
                 currentChar=(int)text.charAt(t) - 97;
 
@@ -527,7 +517,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
                     currentChar = (currentChar + key[k][keyBlockReadPositions[k]]) % 26;
                 }
 
-                output=output + (char)(currentChar+97);
+                output.append((char)(currentChar+97));
 
                 for(int a=0; a<keyBlockReadPositions.length; a++) {
                     keyBlockReadPositions[a]++;
@@ -556,7 +546,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
             return "";
         }
 
-        for(int t=text.length()-(text.length() % StepperAppFields.BLOCK_LENGTH); t<text.length(); t++) {
+        for(int t = text.length()-(text.length() % StepperAppFields.BLOCK_LENGTH); t<text.length(); t++) {
 
             currentChar=(int)text.charAt(t) - 97;
 
@@ -564,7 +554,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
                 currentChar = (currentChar + key[k][keyBlockReadPositions[k]]) % 26;
             }
 
-            output=output + (char)(currentChar+97);
+            output.append((char)(currentChar+97));
 
             for(int a=0; a<keyBlockReadPositions.length; a++) {
                 keyBlockReadPositions[a]++;
@@ -573,7 +563,8 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
                 }
             }
         }
-        return output;
+
+        return output.toString();
     }
 
 
@@ -604,7 +595,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
             }
         }
 
-        String output="";
+        StringBuilder output = new StringBuilder(input.length());
 
         int currentChar;
         int keyIndex = numbersPreviouslyEncrypted % flattenedKey.length();
@@ -625,10 +616,10 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
                 }
             }
 
-            output += (char)currentChar;
+            output.append((char)currentChar);
         }
 
-        return output;
+        return output.toString();
     }
 
 
@@ -695,7 +686,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
         byte[] output = setKeyBlockPositions(blocks);
 
         //Simulate moving through the remainder of the blocks
-        for(int b=0; b<blocks%StepperAppFields.BLOCK_LENGTH; b++) {
+        for(int b = 0; b<blocks% StepperAppFields.BLOCK_LENGTH; b++) {
             //Increment each index of the output
             for(int i=0; i<output.length; i++) {
                 output[i] = (byte) ((output[i] + StepperAppFields.getKeyBlockIncrementIndex(i)) % StepperAppFields.BLOCK_LENGTH);
@@ -758,7 +749,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
             nonAlphas[t]=nonAlphasIn[t];
         }
 
-        String output="";
+        StringBuilder output = new StringBuilder(text.length());
         int textIndex=0;
         int nonAlphasIndex=0;
         int outputLen=text.length();
@@ -783,7 +774,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
                     if( (reinsertingPunctuation) ||
                             (nonAlphas[nonAlphasIndex]>=48 && nonAlphas[nonAlphasIndex]<=57) ) {
                         //add to output
-                        output=output + (char)nonAlphas[nonAlphasIndex];
+                        output.append((char)nonAlphas[nonAlphasIndex]);
                     }
 
                     //empty the symbol
@@ -795,7 +786,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
 
             //If there's no symbol
             else {
-                output=output + text.charAt(textIndex);
+                output.append(text.charAt(textIndex));
                 textIndex++;
             }
 
@@ -813,13 +804,13 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
 
             if((nonAlphas[nonAlphasIndex]>0 && reinsertingPunctuation)
                     || (nonAlphas[nonAlphasIndex])>=48 && nonAlphas[nonAlphasIndex]<=57) {
-                output=output + nonAlphas[nonAlphasIndex];
+                output.append(nonAlphas[nonAlphasIndex]);
             }
             nonAlphasIndex++;
         }
 
 
-        return output;
+        return output.toString();
     }
 
 
@@ -841,91 +832,45 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
 
         text=text.toLowerCase();
 
-        String output="";
+        StringBuilder output = new StringBuilder(text.length());
         for(int i=0; i<text.length(); i++) {
             if(isCancelled()) {
                 return "";
             }
 
             if((int)text.charAt(i)>=97 && (int)text.charAt(i)<=122) {
-                output=output + text.charAt(i);
+                output.append(text.charAt(i));
             }
         }
 
-        return output;
+        return output.toString();
     }
 
 
     /**
-     * Returns a copy of input, but without spaces.<br><br>
+     * Returns a copy of `input`, but with spaces removed.<br><br>
      *
-     * -Exception: add a space after every punctuation mark, as defined in the 'punct' array
-     * unless the punctuation mark is the last character.<br>
+     * Any space between two letters is to be removed. All other spaces are to remain in the output.
      *
-     * -If there are many punctuation marks in a row, add a space only after the last mark.<br>
-     *
-     * Examples:<br>
-     * "" >>> ""<br>
-     * "abc abc" >>> "abcabc"<br>
-     * "abc 123 abc" >>> "abc123abc"<br>
-     * "abc? Abc,abc!" >>> "abc? Abc, abc!"<br>
-     * "abc!!!abc?!." >>> "abc!!! abc?!."<br>
-     *
-     * -DO NOT separate with a space if the punctuation mark is surrounded by digits.<br>
-     * Example: "3.14159 pi" >>> "3.14159pi"<br>
-     * Example: "100, asdf" >>> "100, asdf"<br>
      * @param input text to remove spaces from
      * @return copy of input without spaces
      */
     private String removeSpaces(String input) {
-        if(input==null) throw new AssertionError("Input can't be null");
+        StringBuilder output = new StringBuilder(input.length());
+        output.append(input.charAt(0));
 
-        char[] punct = new char[] {'.', ',', '!', '?', '-', ':', ';'};
-        String output="";
-        boolean currentCharInPunct=false;
-        boolean previousCharInPunct=false;
+        for(int i=1; i<input.length()-1; i++) {
 
+            if(! (input.charAt(i)==' '
+                    && Character.isAlphabetic(input.charAt(i-1)) && Character.isAlphabetic(input.charAt(i+1)))) {
+                output.append(input.charAt(i));
+            }
 
-        //If first character is not a space, add it
-        if(input.length()>0 && input.charAt(0)!=' ') {
-            output=output + input.charAt(0);
         }
 
+        output.append(input.charAt( input.length()-1 ));
 
-        //Do everything after the first character. indices [0..i) are already processed
-        for(int i=1; i<input.length(); i++) {
-            if(isCancelled()) {
-                return "";
-            }
-
-            //Try to find the current input character in punct
-            for(int f=0; f<punct.length; f++) {
-                if(punct[f]==input.charAt(i)) {
-                    currentCharInPunct=true;
-                }
-                if(punct[f]==input.charAt(i-1)) {
-                    previousCharInPunct=true;
-                }
-            }
-
-            //If a punctuation mark was passed, add a space
-            if(i>0 && !currentCharInPunct && previousCharInPunct) {
-                //Add only if not inside of a number
-                if(i<input.length()-1 && (input.charAt(i+1)<48 || input.charAt(i+1)>57)) {
-                    output=output + " ";
-                }
-            }
-
-            //If current character is not a space, add it
-            if(input.charAt(i) != ' ') {
-                output=output + input.charAt(i);
-            }
-
-            currentCharInPunct=false;
-            previousCharInPunct=false;
-        }
-
-        return output;
+        return output.toString();
     }
 
 
@@ -965,10 +910,10 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
             //Divide quotient and take only the portion to the right of the decimal point
             decimalPortion = (double)quotient / StepperAppFields.BLOCK_LENGTH - quotient / StepperAppFields.BLOCK_LENGTH;
             //Divide quotient and keep only the portion to the left of the decimal point
-            quotient = quotient / (long)StepperAppFields.BLOCK_LENGTH;
+            quotient = quotient / (long) StepperAppFields.BLOCK_LENGTH;
 
             //Convert the decimal portion to a digit and add to the result
-            result[i] = (byte)(Math.round(decimalPortion*StepperAppFields.BLOCK_LENGTH));
+            result[i] = (byte)(Math.round(decimalPortion* StepperAppFields.BLOCK_LENGTH));
 
             if(quotient <= 0) {
                 break;

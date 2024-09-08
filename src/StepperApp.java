@@ -247,7 +247,7 @@ public class StepperApp extends JFrame {
         for(int i=2; i<THREAD_SELECTION_OPTIONS.length; i++) {
             try {
                 int currentValue = Integer.parseInt(THREAD_SELECTION_OPTIONS[i]);
-                if(currentValue<1 || currentValue>StepperAppFields.MAX_THREADS) {
+                if(currentValue<1 || currentValue> StepperAppFields.MAX_THREADS) {
                     throw new AssertionError("All default thread selection options except for the first two must represent integers"
                     + " on the interval [1, " + StepperAppFields.MAX_THREADS + "]");
                 }

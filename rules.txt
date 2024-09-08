@@ -6,6 +6,7 @@ As a friendly reminder, failure to follow the rules means I will track you down 
 Order of rule sections:
 -Docstring Rules
 -GUI Setup Method Rules
+-Method Rules
 -Class Structure Rules
 -Final Remarks
 
@@ -29,7 +30,7 @@ All docstrings must follow the template given below:
  * @param parameter1 the first parameter. Parameter descriptions are required!
  * @param parameter2...
  * @return some value. Return value descriptions are required!
- * @throws Exception... Newly thrown exceptions are required! Note: AssertionErrors may be omitted from documentation.
+ * @throws Exception... Newly thrown exceptions are required!
  * Exception description is not needed if throwing an Exception that an overridden function throws,
  * or if the Exception is unlikely to be thrown (i.e. ExecutionException and InterruptedException in a SwingWorker)
  */
@@ -67,6 +68,20 @@ Example:
     constraints.gridx=1;
     constraints.gridy=0;
 
+
+
+
+
+
+
+
+Method Rules
+
+Unless otherwise specified, all methods must not modify any of their inputs.
+All modifications must occur on defensive copies.
+
+If a class constructor takes a non-primitive type as an input, the constructor must load the class with a deep copy
+of the input.
 
 
 
