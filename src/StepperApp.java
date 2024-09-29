@@ -804,13 +804,7 @@ public class StepperApp extends JFrame {
             //Set filename to load from if selected by the user. Invalid filenames are handled by the Boss thread
             if(inputModeSelector.getSelectedItem().equals(INPUT_SELECTION_OPTIONS[2])) {
                 filename = textInputTop.getText();
-
-                //Bug fix
-                if(filename.equals(StepperAppFields.TEXT_LOAD_SIGNAL)) {
-                    filename = "";
-                }
             }
-
 
             //Load key
             fields.setKey(textInputBottom.getText());
@@ -920,14 +914,14 @@ public class StepperApp extends JFrame {
 
                     //For some reason the setThreadCount method allows 0 as an acceptable input
                     if(Integer.parseInt(customInput)==0) {
-                        throw new IllegalArgumentException();
+                        throw new AssertionError();
                     }
 
                     //Add the new value to the box
                     threadCountSelector.insertItemAt(customInput, 1);
                     threadCountSelector.setSelectedItem(customInput);
                 }
-                catch(IllegalArgumentException e) {
+                catch(AssertionError e) {
                     threadCountSelector.setSelectedItem(THREAD_SELECTION_OPTIONS[0]);
                     JOptionPane.showMessageDialog(this, "The input must be an integer between 1 and " + StepperAppFields.MAX_THREADS,
                             "Invalid input", JOptionPane.ERROR_MESSAGE);

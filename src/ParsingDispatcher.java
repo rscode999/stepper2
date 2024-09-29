@@ -44,12 +44,6 @@ public class ParsingDispatcher extends SwingWorker<Void,Void> {
     final private String filepath;
 
 
-    /**
-     * The result of the Boss's processing, assigned where the Dispatcher's doInBackground method would normally return a value.
-     * Cannot be null
-     */
-    String result = "";
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -99,7 +93,6 @@ public class ParsingDispatcher extends SwingWorker<Void,Void> {
      */
     @Override
     protected Void doInBackground() {
-        String output = "";
 
         //Wait for the Boss's output
         try {
@@ -108,7 +101,7 @@ public class ParsingDispatcher extends SwingWorker<Void,Void> {
             bossThread.get();
         }
         catch (Throwable t) {
-            System.out.println("Exception thrown in Dispatcher thread- " + t);
+            System.err.println("Exception thrown in Dispatcher thread- " + t);
 
             //Important: must cancel the boss thread
             bossThread.cancel(true);

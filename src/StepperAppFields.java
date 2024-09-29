@@ -167,7 +167,7 @@ public class StepperAppFields {
      */
     public static byte getKeyBlockIncrementIndex(int index) {
         if(index<0 || index>=KEY_BLOCK_INCREMENTS.length) {
-            throw new IndexOutOfBoundsException("Index must be on the interval [0," + (KEY_BLOCK_INCREMENTS.length-1) + "]");
+            throw new IndexOutOfBoundsException("Index " + index + " is not on the interval [0," + (KEY_BLOCK_INCREMENTS.length-1) + "]");
         }
         return KEY_BLOCK_INCREMENTS[index];
     }

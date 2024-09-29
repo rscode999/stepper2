@@ -94,7 +94,7 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
 
 
     /**
-     * Returns the input error message. The value returned is the empty string if there is no error message
+     * Returns the input error message. The value returned is the empty string if there are no errors.
      * @return the input error message
      */
     public String inputErrorMessage() {
@@ -135,8 +135,7 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
 
 
     /**
-     * Loads the result of the Boss's processing into the parent App.
-     * Also loads the App's fields with the result and periodically updates the App's progress text.<br><br>
+     * Loads the App's fields with the result and periodically updates the App's progress text.<br><br>
      *
      * The parent App's fields (i.e. app.fields()) should be continually updated with the results. The fields may be
      * used to store intermediate values. By the end of the method, the fields should be loaded with the results.<br>
@@ -154,14 +153,15 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
         || !(punctMode>=0 && punctMode<=2)
         || filepath==null) {
             System.err.println("WARNING: OPERATION PRECONDITIONS ARE NOT MET");
-            throw new AssertionError("App reference cannot be null");
+            throw new AssertionError("Operation preconditions are not met");
         }
 
-        //Switch the screen
+        //Switch the screen. At this point, the text on the Processing screen says "Loading input..."
         app.setScreen("PROCESSING");
 
 
         //Load the input into the parent app's fields, depending on if loading from text or file
+        //Loading to the app's fields is done so that the text and key can be in the same place
         try {
             if (filepath.equals(StepperAppFields.TEXT_LOAD_SIGNAL)) {
                 app.fields().setText(app.topInputValue());
@@ -177,14 +177,17 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
         }
         catch(Throwable t) {
            inputErrorMessage = "Exception during text loading- " + t;
-            return null;
+           return null;
         }
 
 
         //Set local copies of the inputs that were just put into the app's fields
-        String text = app.fields().text();
+        StringBuilder text = new StringBuilder(app.fields().text());
         String inputKey = app.fields().key();
 
+        //Remove text and key from the app to save memory
+        app.fields().setText("");
+        app.fields().setKey("");
 
         System.gc();
         app.setLoadingStatusText("Formatting...");
@@ -193,7 +196,7 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
         //REMOVE DIACRITICS USING ALL THREADS
 
         //Create text pieces
-        String[] textPieces = setWorkerLoads(text,
+        String[] textPieces = setWorkerLoads(text.toString(),
                 app.fields().threadCount(),
                 StepperAppFields.BLOCK_LENGTH);
 
@@ -208,16 +211,16 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
         textPieces = new String[workerThreads.length];
         try {
             //Execute workers
-            for(int i=0; i<workerThreads.length; i++) {
-                workerThreads[i].execute();
+            for(SwingWorker<String,String> workerThread : workerThreads) {
+                workerThread.execute();
             }
-            for (int i = 0; i < workerThreads.length; i++) {
+            for(int i = 0; i < workerThreads.length; i++) {
                 textPieces[i] = workerThreads[i].get();
             }
         }
         catch (InterruptedException e) {
-            for (int i = 0; i < workerThreads.length; i++) {
-                workerThreads[i].cancel(true);
+            for(SwingWorker<String,String> workerThread : workerThreads) {
+                workerThread.cancel(true);
             }
             return null;
         }
@@ -227,9 +230,9 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
         }
 
         //Reload the text with the results
-        text = "";
+        text = new StringBuilder();
         for(int i=0; i<workerThreads.length; i++) {
-            text += textPieces[i];
+            text.append(textPieces[i]);
         }
 
 
@@ -242,10 +245,10 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
 
         //Format the key
         byte[][] operationsKey = createKeyBlocks(inputKey, StepperAppFields.BLOCK_COUNT, StepperAppFields.BLOCK_LENGTH);
-
+        inputKey = null;
 
         //Create loads
-        textPieces = setWorkerLoads(text,
+        textPieces = setWorkerLoads(text.toString(),
                 app.fields().threadCount(),
                 StepperAppFields.BLOCK_LENGTH);
 
@@ -274,8 +277,8 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
         Arrays.fill(textPieces, "");
         try {
             //Start each worker thread
-            for (int i = 0; i < workerThreads.length; i++) {
-                workerThreads[i].execute();
+            for(SwingWorker<String,String> workerThread : workerThreads) {
+                workerThread.execute();
             }
 
             for (int i = 0; i < workerThreads.length; i++) {
@@ -283,8 +286,8 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
             }
         }
         catch (InterruptedException e) {
-            for (int i = 0; i < workerThreads.length; i++) {
-                workerThreads[i].cancel(true);
+            for(SwingWorker<String,String> workerThread : workerThreads) {
+                workerThread.cancel(true);
             }
             return null;
         }
@@ -299,14 +302,14 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
         System.gc();
 
         //Create the output
-        text = "";
-        for (int i = 0; i < textPieces.length; i++) {
-            text += textPieces[i];
+        text = new StringBuilder();
+        for(String textPiece : textPieces) {
+            text.append(textPiece);
         }
         textPieces = null;
 
 
-        app.fields().setText(text);
+        app.fields().setText(text.toString());
         app.fields().setKey(arrToString(operationsKey));
 
         //Screen changing occurs in the ParsingDispatcher that created this Boss
@@ -344,19 +347,19 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
             throw new AssertionError("Input cannot be null");
         }
 
-        String output="";
+        StringBuilder output= new StringBuilder();
 
-        for(int a=0; a<input.length; a++) {
-            for(int i=0; i<input[a].length; i++) {
-                if(input[a][i]<0 || input[a][i]>25) {
+        for(byte[] block : input) {
+            for(byte index : block) {
+                if (index < 0 || index > 25) {
                     throw new AssertionError("All input indices must be on the interval [0,25]");
                 }
 
-                output += (char)(input[a][i] + 97);
+                output.append((char) (index + 97));
             }
         }
 
-        return output;
+        return output.toString();
     }
 
 
@@ -413,7 +416,7 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
         }
 
         //The formatted key will have all lowercase ASCII characters in it
-        String formattedKey="";
+        StringBuilder formattedKey = new StringBuilder();
 
 
         //Create the formatted key. Fill until every input character is loaded
@@ -422,7 +425,7 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
             currentChar = removeDiacritics(currentChar);
 
             if(currentChar>=97 && currentChar<=122) {
-                formattedKey += currentChar;
+                formattedKey.append(currentChar);
             }
         }
 
@@ -447,7 +450,7 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
             currentRandChar = (currentRandChar%26 + 97);
 
             //Add random character to the formatted key
-            formattedKey += (char)currentRandChar;
+            formattedKey.append((char) currentRandChar);
         }
 //        System.out.println(formattedKey);
 
@@ -506,7 +509,7 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
             inputFile = new File(filepath);
         }
 
-        String output = "";
+        StringBuilder output = new StringBuilder();
 
         //Check if the input file ends in .txt
         if(inputFile.getName().length()<=3 || !inputFile.getName().substring((int) (inputFile.getName().length()-4)).equals(".txt")) {
@@ -523,8 +526,8 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
                         return "";
                     }
 
-                    output += fileReader.nextLine();
-                    output += "\n";
+                    output.append(fileReader.nextLine());
+                    output.append("\n");
                 }
             }
             //If error, throw an exception
@@ -541,7 +544,7 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
             }
         }
 
-        return output;
+        return output.toString();
     }
 
 
@@ -644,7 +647,7 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
      * -Note: The final character of each block (excluding the last block) should end in an alphabetic character.<br><br>
      *
      * The test cases may fail. If so, manually check if the thread loads are even in each failed test.
-     * Even distribution and piece length being a multiple of `threads` are the most important aspects of the output.<br>
+     * An even distribution of work and a piece length being a multiple of `threads` are the most important aspects of the output.<br>
      *
      * @param text the text to split, non-null
      * @param threads how many pieces `text` should be split into, non-negative. If zero, returns {""}

@@ -97,7 +97,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
     }
 
     /**
-     * FOR UNIT TESTING ONLY!!! Creates a new OperationsWorker and initializes its fields with garbage values.
+     * FOR METHOD UNIT TESTING ONLY!!! Creates a new OperationsWorker and initializes its fields with garbage values.
      * BREAKS OPERATION PRECONDITIONS!
      */
     public ParsingOperationsWorker() {
@@ -130,12 +130,12 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
         if(key.length != StepperAppFields.BLOCK_COUNT || key[0].length != StepperAppFields.BLOCK_LENGTH) {
             throw new AssertionError("Key dimensions must be `StepperAppFields.BLOCK_COUNT` by `StepperAppFields.BLOCK_LENGTH`");
         }
-        for(int a=0; a<key.length; a++) {
-            if(key[a]==null) {
+        for(byte[] block : key) {
+            if (block == null) {
                 throw new AssertionError("All indices in the key cannot be null");
             }
-            for(int i=0; i<key[0].length; i++) {
-                if(key[a][i]<0 || key[a][i]>25) {
+            for(byte index : block) {
+                if (index<0 || index>25) {
                     throw new AssertionError("All indices in the key must be on the interval [0,25]");
                 }
             }
@@ -249,9 +249,9 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
         }
 
         //Check key contents: all indices on [0,25]
-        for(int a=0; a<key.length; a++) {
-            for(int i=0; i<key[a].length; i++) {
-                if(key[a][i]<0 || key[a][i]>25) {
+        for(byte[] block : key) {
+            for(byte index : block) {
+                if (index < 0 || index > 25) {
                     throw new AssertionError("All key indices must be on the interval [0,25]");
                 }
             }
@@ -274,9 +274,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
         int currentBlock = (startBlock + text.length()/ StepperAppFields.BLOCK_LENGTH);
 
         byte[] keyBlockReadPositions=new byte[StepperAppFields.BLOCK_COUNT];
-        for(int s=0; s<keyBlockReadPositions.length; s++) {
-            keyBlockReadPositions[s]=keyBlockBasePositions[s];
-        }
+        System.arraycopy(keyBlockBasePositions, 0, keyBlockReadPositions, 0, keyBlockReadPositions.length);
 
         for(int m = 0; m<(text.length() % StepperAppFields.BLOCK_LENGTH); m++) {
             for(int a=0; a<keyBlockReadPositions.length; a++) {
@@ -332,9 +330,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
                 }
             }
 
-            for(int s=0; s<keyBlockReadPositions.length; s++) {
-                keyBlockReadPositions[s]=keyBlockBasePositions[s];
-            }
+            System.arraycopy(keyBlockBasePositions, 0, keyBlockReadPositions, 0, keyBlockReadPositions.length);
 
             for(int t = b; t>b- StepperAppFields.BLOCK_LENGTH; t--) {
 
@@ -385,16 +381,16 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
             throw new AssertionError("Numbers decrypted cannot be negative");
         }
 
-        String flattenedKey = "";
-        for(int a=0; a<key.length; a++) {
-            if(key[a]==null) {
+        StringBuilder flattenedKey = new StringBuilder();
+        for(byte[] block : key) {
+            if (block == null) {
                 throw new AssertionError("Key indices cannot be null");
             }
-            for(int i=0; i<key[a].length; i++) {
-                if(key[a][i]<0 || key[a][i]>25) {
+            for(byte index : block) {
+                if (index < 0 || index > 25) {
                     throw new AssertionError("Key indices must be on the interval [0,25]");
                 }
-                flattenedKey += (char)key[a][i];
+                flattenedKey.append((char) index);
             }
         }
 
@@ -472,9 +468,9 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
         }
 
         //Check key contents: all indices on [0,25]
-        for(int a=0; a<key.length; a++) {
-            for(int i=0; i<key[a].length; i++) {
-                if(key[a][i]<0 || key[a][i]>25) {
+        for(byte[] block : key) {
+            for(byte index : block) {
+                if (index < 0 || index > 25) {
                     throw new AssertionError("All key indices must be on the interval [0,25]");
                 }
             }
@@ -491,9 +487,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
 
         byte[] keyBlockBasePositions = initializeKeyBlockPositions(startBlocks);
         byte[] keyBlockReadPositions = new byte[StepperAppFields.BLOCK_COUNT];
-        for(int s=0; s<keyBlockReadPositions.length; s++) {
-            keyBlockReadPositions[s] = keyBlockBasePositions[s];
-        }
+        System.arraycopy(keyBlockBasePositions, 0, keyBlockReadPositions, 0, keyBlockReadPositions.length);
 
 
         StringBuilder output = new StringBuilder(text.length());
@@ -505,9 +499,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
                 return "";
             }
 
-            for(int pos=0; pos<keyBlockReadPositions.length; pos++) {
-                keyBlockReadPositions[pos] = keyBlockBasePositions[pos];
-            }
+            System.arraycopy(keyBlockBasePositions, 0, keyBlockReadPositions, 0, keyBlockReadPositions.length);
 
             for(int t = b; t<(b+ StepperAppFields.BLOCK_LENGTH); t++) {
 
@@ -538,9 +530,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
             blocksEncrypted++;
         }
 
-        for(int pos=0; pos<keyBlockReadPositions.length; pos++) {
-            keyBlockReadPositions[pos] = keyBlockBasePositions[pos];
-        }
+        System.arraycopy(keyBlockBasePositions, 0, keyBlockReadPositions, 0, keyBlockReadPositions.length);
 
         if(isCancelled()) {
             return "";
@@ -582,16 +572,16 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
             throw new AssertionError("Neither input can be null");
         }
 
-        String flattenedKey = "";
-        for(int a=0; a<key.length; a++) {
-            if(key[a]==null) {
+        StringBuilder flattenedKey = new StringBuilder();
+        for(byte[] block : key) {
+            if (block == null) {
                 throw new AssertionError("Key indices cannot be null");
             }
-            for(int i=0; i<key[a].length; i++) {
-                if(key[a][i]<0 || key[a][i]>25) {
+            for(byte index : block) {
+                if (index < 0 || index > 25) {
                     throw new AssertionError("Key indices must be on the interval [0,25]");
                 }
-                flattenedKey += (char)key[a][i];
+                flattenedKey.append((char) index);
             }
         }
 
@@ -898,7 +888,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
         quotient = quotient % ((long)Math.pow(StepperAppFields.BLOCK_LENGTH, StepperAppFields.BLOCK_COUNT));
 
         //Divide quotient and take only the portion to the right of the decimal point
-        decimalPortion = (double) quotient / StepperAppFields.BLOCK_LENGTH - quotient / StepperAppFields.BLOCK_LENGTH;
+        decimalPortion = (double)quotient / StepperAppFields.BLOCK_LENGTH - quotient / StepperAppFields.BLOCK_LENGTH;
         //Divide quotient and take only the portion to the left of the decimal point
         quotient = quotient / StepperAppFields.BLOCK_LENGTH;
 

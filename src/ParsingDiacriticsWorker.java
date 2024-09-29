@@ -89,7 +89,9 @@ public class ParsingDiacriticsWorker extends SwingWorker<String,String> {
         char charReplacement='#';
 
         //to protect me from my own stoopidity
-        if(outChars.length != inChars.length) throw new AssertionError("warning: check lengths");
+        if(outChars.length != inChars.length) {
+            throw new AssertionError("INTERNAL ERROR- out char and in char arrays are not the same length");
+        }
 
 
         //loop through outChar strings
@@ -98,8 +100,9 @@ public class ParsingDiacriticsWorker extends SwingWorker<String,String> {
             //if match, set replacement char to ASCII replacement
 
             for(int oc=0; oc<outChars[os].length(); oc++) {
-                if(outChars[os].charAt(oc)==input) {
-                    charReplacement=inChars[os];
+                if(outChars[os].charAt(oc) == input) {
+                    charReplacement = inChars[os];
+                    break;
                 }
             }
         }
