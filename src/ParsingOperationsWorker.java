@@ -624,7 +624,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
      * Indices 1, 3, and 5 hold the corresponding ASCII value in the corresponding output indices
      *
      * @param text text to find non-alphabetic characters in
-     * @return char array containing locations of non-alphabetic characters. Returns ['C'] if the Worker is cancelled.
+     * @return char array containing locations of non-alphabetic characters. Returns {'C'} if the Worker is cancelled.
      */
     private char[] findNonAlphaPositions(String text) {
         if(text==null) {
@@ -635,7 +635,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
 
         for(int i=0; i<text.length(); i++) {
             if(isCancelled()) {
-                return new char['C'];
+                return new char[] {'C'};
             }
 
             if((int)text.charAt(i)<65
