@@ -54,7 +54,7 @@ public class ParsingDispatcher extends SwingWorker<Void,Void> {
      *
      * @param app the app that uses this Boss. Can't be null
      * @param encrypting true if the Boss is encrypting, false if decrypting
-     * @param punctMode 0 if including punctuation, 1 if excluding spaces, 2 if alphabetic characters only
+     * @param punctMode 0 if including punctuation, 1 if excluding spaces, 2 if alphabetic characters only. No other values allowed
      * @param filepath absolute path to the input file. Empty (i.e. length=0) if taking input from a text field. Can't be null
      */
     public ParsingDispatcher(StepperApp app, boolean encrypting, byte punctMode, String filepath) {

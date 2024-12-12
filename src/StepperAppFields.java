@@ -174,7 +174,7 @@ public class StepperAppFields {
 
 
     /**
-     * Returns the text
+     * Returns the contents of the `text` field
      * @return current contents of the text field
      */
     public String text() {
@@ -182,8 +182,8 @@ public class StepperAppFields {
     }
 
     /**
-     * Sets text to `newText`. newText can't be null
-     * @param newText the new text
+     * Sets the object's `text` field to `newText`.
+     * @param newText the new text. Cannot be null
      */
     public void setText(String newText) {
         if(newText==null) throw new AssertionError("New text cannot be null");
@@ -192,7 +192,7 @@ public class StepperAppFields {
 
 
     /**
-     * Returns the key
+     * Returns the contents of the object's `key` field.
      * @return current contents of the key field
      */
     public String key() {
@@ -200,8 +200,8 @@ public class StepperAppFields {
     }
 
     /**
-     * Sets text to `newKey`. newKey can't be null
-     * @param newKey the new text
+     * Sets the object's `key` field to `newKey`.
+     * @param newKey the new text. Cannot be null
      */
     public void setKey(String newKey) {
         if(newKey==null) throw new AssertionError("New key cannot be null");
@@ -218,7 +218,7 @@ public class StepperAppFields {
     }
 
     /**
-     * Sets login credentials to `newValue`.
+     * Sets the object's login credentials to `newValue`.
      * @param newValue the new login credentials
      */
     public void setLoginCredentials(byte newValue) {
@@ -235,8 +235,8 @@ public class StepperAppFields {
     }
 
     /**
-     * Sets threadCount to `newThreadCount`, which must be on the interval [0, MAX_THREADS]
-     * @param newThreadCount new number of threads
+     * Sets the object's threadCount to `newThreadCount`.
+     * @param newThreadCount new number of threads. Must be on the interval [0, StepperAppFields.MAX_THREADS]
      */
     public void setThreadCount(int newThreadCount) {
         if(newThreadCount<0 || newThreadCount>MAX_THREADS) {
@@ -264,9 +264,9 @@ public class StepperAppFields {
         }
 
         //Convert entered password to a string
-        String enteredPassword="";
-        for(int i=0; i<enteredPasswordRaw.length; i++) {
-            enteredPassword += enteredPasswordRaw[i];
+        StringBuilder enteredPassword= new StringBuilder();
+        for (char c : enteredPasswordRaw) {
+            enteredPassword.append(c);
         }
 
         int correctPwIndex = -1;
@@ -276,7 +276,7 @@ public class StepperAppFields {
         for(int p=0; p<VALID_PASSWORDS.length; p++) {
 
             //If equality found, record the index and stop
-            if(enteredPassword.equals(VALID_PASSWORDS[p])) {
+            if(enteredPassword.toString().equals(VALID_PASSWORDS[p])) {
                 correctPwIndex = p;
                 break;
             }

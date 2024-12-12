@@ -59,24 +59,24 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
     /**
      * Creates a ParsingOperationsWorker and loads its fields.
      * @param input the substring it should process. Can't be null
-     * @param key the key to process the substring with. Can't be null. No subarrays can be null.
+     * @param key the key to process the substring with. Can't be null, no subarrays can be null.
      *            All indices must be on [0,25]. Dimensions must be `StepperAppFields.BLOCK_COUNT` by `StepperAppFields.BLOCK_LENGTH`
      * @param encrypting true if this Worker should encrypt its text, false otherwise
-     * @param punctMode 0 if including punctuation, 1 if excluding spaces, 2 if alphabetic characters only
-     * @param startBlock where to start processing the input at. Must be at least 0
+     * @param punctMode 0 if including punctuation, 1 if excluding spaces, 2 if alphabetic characters only. ALl other value are not allowed
+     * @param startBlock the block in the original input to start processing at. Must be at least 0
      * @param numbersPreviouslyProcessed amount of numbers encrypted so far. Cannot be negative
      * @param name custom name for this Worker, non-null and cannot equal the string "null"
      */
     public ParsingOperationsWorker(String input, byte[][] key, boolean encrypting,
                                    byte punctMode, int startBlock, int numbersPreviouslyProcessed, String name) {
 
-        this.input=input;
-
-        //Make a deep copy of the key
+        //Check some preconditions
+        if(input==null) throw new AssertionError("Input cannot be null");
         if(key[0]==null) throw new AssertionError("All indices in the key cannot be null");
         if(key.length != StepperAppFields.BLOCK_COUNT || key[0].length != StepperAppFields.BLOCK_LENGTH)
             throw new AssertionError("Key dimensions must be `StepperAppFields.BLOCK_COUNT` by `StepperAppFields.BLOCK_LENGTH`");
 
+        //Make a deep copy of the key
         this.key = new byte[key.length][key[0].length];
         for(int a=0; a<key.length; a++) {
             if(key[a]==null) throw new AssertionError("All indices in the key cannot be null");
@@ -87,6 +87,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
             }
         }
 
+        this.input=input;
         this.encrypting=encrypting;
         this.punctMode=punctMode;
         this.startBlock=startBlock;
@@ -219,7 +220,8 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
 
 
     /**
-     * Returns the decrypted version of text using the given key beginning after `startBlock` blocks have been decrypted.<br><br>
+     * Returns the decrypted version of text using the given key.
+     * Operations start after `startBlock` blocks have been decrypted.<br><br>
      *
      * Algorithm first implemented on February 26-29, 2024. Enhanced encryption finished on July 18, 2024. By Chris P Bacon
      *
@@ -357,7 +359,6 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
             }
         }
 
-        //Reverse the output (the decryption process will make the text turn out backwards)
         output.reverse();
 
         return output.toString();
@@ -856,6 +857,9 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
                 output.append(input.charAt(i));
             }
 
+            if(isCancelled()) {
+                return "";
+            }
         }
 
         output.append(input.charAt( input.length()-1 ));
@@ -903,14 +907,14 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
             quotient = quotient / (long) StepperAppFields.BLOCK_LENGTH;
 
             //Convert the decimal portion to a digit and add to the result
-            result[i] = (byte)(Math.round(decimalPortion* StepperAppFields.BLOCK_LENGTH));
+            result[i] = (byte)(Math.round(decimalPortion*StepperAppFields.BLOCK_LENGTH));
 
             if(quotient <= 0) {
                 break;
             }
         }
 
-        //Reverse the output
+        //Reverse the result to get the output
         byte[] output = new byte[result.length];
         for(int i=0; i<result.length; i++) {
             output[i] = result[result.length - i - 1];

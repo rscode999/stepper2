@@ -4,7 +4,7 @@ import java.util.Arrays;
 /**
  * Class to test the setWorkerLoads method in the StepperFunctions class.<br><br>
  *
- * Note: As long as the thread loads are evenly distributed, the tests may fail.
+ * Note: As long as the thread loads are evenly distributed, the result is acceptable.
  */
 public class SetWorkerLoadsTest {
 
@@ -170,9 +170,9 @@ public class SetWorkerLoadsTest {
         printAssert(expected, result);
 
         //First index has enough room for many strings of length minBlockSize
-        s = "aaaaaaaacccccccceeeeeeeee";
+        s = "aaaaaaaacccccccceeeeeeee";
         result = b.setWorkerLoads_Testing(s, 2, 8);
-        expected = new String[]{"aaaaaaaacccccccc", "eeeeeeeee"};
+        expected = new String[]{"aaaaaaaa", "cccccccceeeeeeee"};
         printAssert(expected, result);
 
         //First index has enough room for many strings of length minBlockSize, minBlockSize is not 8

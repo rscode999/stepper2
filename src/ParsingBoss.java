@@ -1,6 +1,7 @@
 import javax.swing.*;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.lang.reflect.Array;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Scanner;
@@ -35,6 +36,7 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
      */
     final private boolean encrypting;
 
+
     /**
      * The absolute path to the input file. If `filepath` is the empty string, the Boss will take its input from
      * its parent App's top text input.
@@ -48,11 +50,11 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
     final private byte punctMode;
 
 
-
     /**
      * Holds any input error messages that might occur during the input loading. Holds the empty string if there are no errors
      */
     private String inputErrorMessage = "";
+
 
 
     /**
@@ -102,7 +104,6 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
         if(inputErrorMessage == null) {
             throw new AssertionError("Input error message cannot be null");
         }
-
         return inputErrorMessage;
     }
 
@@ -148,11 +149,11 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
      */
     @Override
     protected Void doInBackground() {
-        //Idiot check
+        //Idiot check, in case the test constructor was used
         if(app==null
         || !(punctMode>=0 && punctMode<=2)
         || filepath==null) {
-            System.err.println("WARNING: OPERATION PRECONDITIONS ARE NOT MET");
+            System.err.println("WARNING: OPERATION PRECONDITIONS ARE NOT MET. TEST CONSTRUCTOR WAS USED");
             throw new AssertionError("Operation preconditions are not met");
         }
 
@@ -247,7 +248,7 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
         byte[][] operationsKey = createKeyBlocks(inputKey, StepperAppFields.BLOCK_COUNT, StepperAppFields.BLOCK_LENGTH);
         inputKey = null;
 
-        //Create loads
+        //Assign workloads to threads
         textPieces = setWorkerLoads(text.toString(),
                 app.fields().threadCount(),
                 StepperAppFields.BLOCK_LENGTH);
@@ -285,6 +286,7 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
                 textPieces[i] = workerThreads[i].get();
             }
         }
+        //If interrupted, stop all the workers
         catch (InterruptedException e) {
             for(SwingWorker<String,String> workerThread : workerThreads) {
                 workerThread.cancel(true);
@@ -339,7 +341,7 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
      *
      * Note: the output string should entirely consist of lowercase English ASCII characters.<br><br>
      *
-     * @param input array to convert to a String. Can't be null. All indices must be on [0,25]
+     * @param input array to convert to a String. Can't be null, no subarrays can be null. All indices must be on [0,25]
      * @return String containing letters represented by the input's numerical values, in order
      */
     private String arrToString(byte[][] input) {
@@ -349,7 +351,12 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
 
         StringBuilder output= new StringBuilder();
 
+        //Loop through each character in the input. Append it to the string output
         for(byte[] block : input) {
+            if(block == null) {
+                throw new AssertionError("No subarray of the input can be null");
+            }
+
             for(byte index : block) {
                 if (index < 0 || index > 25) {
                     throw new AssertionError("All input indices must be on the interval [0,25]");
@@ -364,23 +371,31 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
 
 
     /**
-     * Returns the amount of lowercase English ASCII characters in index 0 and the amount of numeric characters in index 1.<br><br>
+     * Returns the amount of lowercase English ASCII characters in index 0 and the amount of numeric characters in index 1.
+     * If cancelled, returns {0,0}.<br><br>
      *
      * Returns an array to prevent looping over the same string twice.
      *
      * @param input String to count alphabetic and numeric characters in
-     * @return {number of alphabetic chars, number of numeric chars}
+     * @return {number of alphabetic chars, number of numeric chars}, or {0,0} if the Boss is cancelled
      */
     private int[] countAlphaAndNumericChars(String input) {
         int[] output = new int[] {0,0};
 
         for(int i=0; i<input.length(); i++) {
+            //alphabetic character: +index 0
             if((int)input.charAt(i)>=97 && (int)input.charAt(i)<=122) {
                 output[0]++;
             }
 
+            //numeric character: +index 1
             if((int)input.charAt(i)>=48 && (int)input.charAt(i)<=57) {
                 output[1]++;
+            }
+
+            //cancel check
+            if(isCancelled()) {
+                return new int[] {0,0};
             }
         }
 
@@ -502,7 +517,7 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
         File inputFile;
 
         //Create file from default or the top text input
-        if(filepath.equals("")) {
+        if(filepath.isEmpty()) {
             inputFile = new File(StepperAppFields.DEFAULT_INPUT_FILE);
         }
         else {
@@ -533,7 +548,7 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
             //If error, throw an exception
             catch (FileNotFoundException e) {
                 String fileErrorMsg = "The input file \"" + inputFile.getName() + "\" does not exist\n";
-                if(filepath.equals("")) {
+                if(filepath.isEmpty()) {
                     fileErrorMsg += "in the folder containing the app";
                 }
                 else {
@@ -569,9 +584,6 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
                 '2', '3', '4', '5', '6', '7', '8', '9', '-'};
         char charReplacement='#';
 
-        //to protect me from my own stoopidity
-        if(outChars.length != inChars.length) throw new AssertionError("warning: check lengths");
-
 
         //loop through outChar strings
         for(int os=0; os<outChars.length; os++) {
@@ -595,71 +607,33 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
 
 
     /**
-     * Returns the appropriate number of blocks to go into each output index<br><br>
-     *
-     * Helper to setWorkerLoads.
-     *
-     * @param totalBlocks total number of blocks in the input string. Must be positive
-     * @param threads number of blocks in the output array. Must be positive
-     * @return array of length `threads` containing appropriate number of blocks per output index
-     */
-    private int[] setBlocksPerIndex(int totalBlocks, int threads) {
-        /*
-        This is roughly equivalent to putting the first block of the input in index 0 of the output array, the second in index 1...
-        Eventually, the end of the output array is reached. The block after goes into the first output array index...
-
-        Suppose there are 8 blocks in the input and 3 indices in the output.
-        After loading the first 3 blocks: {[1], [2], [3]}
-        After loading the next 3 blocks: {[1,4], [2,5], [3,6]}
-        After loading the final 2 blocks: {[1,4,7], [2,5,8], [3,6]}
-        This arrangement succeeds in evenly splitting the blocks among the output indices.
-         */
-        if(totalBlocks<=0) throw new AssertionError("Block total must be positive");
-        if(threads<=0) throw new AssertionError("Thread count must be positive");
-
-        int[] output = new int[threads];
-        int outputIndex = threads-1;
-
-        for(int i=totalBlocks-1; i>=0; i--) {
-            output[outputIndex]++;
-            outputIndex--;
-
-            if(outputIndex < 0) {
-                outputIndex = threads-1;
-            }
-        }
-
-//        System.out.println(Arrays.toString(output));
-        return output;
-    }
-
-
-    /**
-     * Splits `text` evenly into `threads` pieces.
+     * Returns an array containing `text` split evenly into `threads` pieces.
      * The number of alphabetic characters of each piece must be a multiple of `blockLength`, except for the last piece.<br><br>
      *
      * -Alphabetic characters are lowercase English ASCII characters.<br>
      *
-     * -All indices except for the last one should have `blockLength` alphabetic characters, or a multiple thereof.<br>
+     * -All indices except for the last one should have `blockLength` alphabetic characters or a multiple thereof.<br>
      *
-     * -If `threads` is greater than ceil(text.length()/blockSize), any strings not used should be empty strings, not null.<br>
+     * -Any unused threads should be assigned the empty string, not null. Empty strings may occur at the beginning of the output array.<br>
      *
-     * -Note: The final character of each block (excluding the last block) should end in an alphabetic character.<br><br>
+     * -Note: The final character of each output index (excluding the last index) should end in an alphabetic character.<br><br>
      *
      * The test cases may fail. If so, manually check if the thread loads are even in each failed test.
      * An even distribution of work and a piece length being a multiple of `threads` are the most important aspects of the output.<br>
      *
      * @param text the text to split, non-null
-     * @param threads how many pieces `text` should be split into, non-negative. If zero, returns {""}
-     * @param blockLength number (or a divisor) of alphabetic characters per piece, non-negative
+     * @param threads how many pieces `text` should be split into. If zero, or the Boss is cancelled, returns {""}. Cannot be negative
+     * @param blockLength number of characters, or a multiple thereof, to put in each piece. Must be positive
      * @return array of Strings. There are `threads` total Strings evenly split among the output's indices
      */
     private String[] setWorkerLoads(String text, int threads, int blockLength) {
 
+        //Assert preconditions
         if (text == null || threads < 0 || blockLength<=0) {
             throw new AssertionError("No argument can be null or zero");
         }
 
+        //Return the empty string if threads is 0
         if(threads==0) {
             return new String[] {""};
         }
@@ -670,55 +644,96 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
             if(text.charAt(i)>=97 && text.charAt(i)<=122) {
                 alphaChars++;
             }
-        }
 
-        //Create String array to hold the blocks
-        String[] blocks = new String[(int) Math.ceil(alphaChars / (float)blockLength)];
-        Arrays.fill(blocks, "");
-        if(blocks.length==0) {
-            return new String[] {""};
-        }
-
-        //Load each String with characters until the end is reached
-        int currentBlock = 0;
-        alphaChars = 0;
-        for (int i = 0; i < text.length(); i ++) {
-            blocks[currentBlock] += text.charAt(i);
-
-            //Add to alphabetic char total
-            if(text.charAt(i)>=97 && text.charAt(i)<=122) {
-                alphaChars++;
-            }
-
-            //Move to new block when current block is filled with alpha chars
-            if(alphaChars>=blockLength) {
-                alphaChars=0;
-                currentBlock++;
-            }
-            //Prevent array overruns
-            if(currentBlock >= blocks.length) {
-                currentBlock--;
+            if(isCancelled()) {
+                return new String[] {""};
             }
         }
 
-//        for(int i=0; i<blocks.length; i++) {
-//            System.out.println("\"" + blocks[i] + "\"");
-//        }
-//        System.out.println();
+        //CALCULATE NUMBER OF CHARACTERS PER THREAD
 
-        //Create another String array to hold the result and load it
+        //Number of blocks equals the number of alphabetic characters divided by the block length
+        //If there is a remainder, there is an extra block
+        int nBlocks = alphaChars / blockLength;
+        if (alphaChars % blockLength != 0) nBlocks++;
+        //Note: one block is a piece of length `blockLength` or shorter
+
+        //Create the number of blocks in each thread. Temporarily holds the number of characters
+        int[] charsPerPiece = new int[threads];
+
+        //The minimum number of blocks per piece is the number of blocks divided by the number of threads
+        Arrays.fill(charsPerPiece, nBlocks / threads);
+        //The number of remaining blocks equals the remainder of the number of blocks divided by the number of threads
+        for (int i = charsPerPiece.length - 1; i >= charsPerPiece.length - nBlocks % threads; i--) {
+            charsPerPiece[i]++;
+        }
+
+
+        //Create another String array to hold the result and load it. Also properly calculate number of characters per thread
+        StringBuilder[] threadLoads = new StringBuilder[threads];
+        for(int t=0; t<threadLoads.length; t++) {
+            threadLoads[t] = new StringBuilder();
+            charsPerPiece[t] *= blockLength; //now, charsPerThread holds the number of characters per thread
+
+            //Check if cancelled, abort if so
+            if(isCancelled()) {
+                return new String[] {""};
+            }
+        }
+
+
+        //Move through each thread and load it
+        int currentThread = 0;
+        int currentTextIndex = 0;
+        while(currentThread < threadLoads.length) {
+
+            //If there are no more characters to load, move to the next thread
+            if(charsPerPiece[currentThread] == 0) {
+                currentThread++;
+            }
+            //If not, load the character
+            else {
+                threadLoads[currentThread].append(text.charAt(currentTextIndex));
+
+                //Update number of alphabetic characters if a letter was loaded
+                if(text.charAt(currentTextIndex)>=97 && text.charAt(currentTextIndex)<=122) {
+                    charsPerPiece[currentThread]--;
+                }
+
+                //Move to the next index
+                currentTextIndex++;
+            }
+
+            //Exit the loop if it will overrun the input text
+            if(currentTextIndex >= text.length()) {
+                break;
+            }
+
+            //Check if cancelled, abort if so
+            if(isCancelled()) {
+                return new String[] {""};
+            }
+        }
+
+        //Load any non-alphabetic character that was not loaded in the main loading loop
+        while(currentTextIndex < text.length()) {
+            threadLoads[threadLoads.length-1].append(text.charAt(currentTextIndex));
+            currentTextIndex++;
+
+            //Check if cancelled, abort if so
+            if(isCancelled()) {
+                return new String[] {""};
+            }
+        }
+
+        //Convert StringBuilders to proper strings
         String[] output = new String[threads];
-        Arrays.fill(output, "");
+        for(int l=0; l<threadLoads.length; l++) {
+            output[l] = threadLoads[l].toString();
 
-
-        currentBlock = 0;
-        int[] blocksPerIndex = setBlocksPerIndex(blocks.length, threads);
-
-        //Move through the threads
-        for(int t=0; t<threads; t++) {
-            for(int w=0; w<blocksPerIndex[t]; w++) {
-                output[t] += blocks[currentBlock];
-                currentBlock++;
+            //Check if cancelled, abort if so
+            if(isCancelled()) {
+                return new String[] {""};
             }
         }
 

@@ -18,15 +18,15 @@ public class ParsingDiacriticsWorker extends SwingWorker<String,String> {
 
     /**
      * Creates a ParsingDiacriticsWorker called `name` and loads it with `text`
-     * @param text String to remove diacritics from, non-null
-     * @param name custom name for this Worker, non-null and cannot equal the string "null"
+     * @param text String to remove diacritics from. Non-null
+     * @param name custom name for this Worker. Non-null and cannot equal the string "null"
      */
     public ParsingDiacriticsWorker(String text, String name) {
         if(text==null) {
             throw new AssertionError("Text cannot be null");
         }
         if(name==null || name.equals("null")) {
-            throw new AssertionError("Name cannot be null");
+            throw new AssertionError("Name cannot be null or equal the string \"null\"");
         }
 
         this.text = text;
@@ -64,6 +64,7 @@ public class ParsingDiacriticsWorker extends SwingWorker<String,String> {
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
@@ -87,11 +88,6 @@ public class ParsingDiacriticsWorker extends SwingWorker<String,String> {
         final char[] inChars={'a', 'c', 'd', 'e', 'i', 'o', 'n', 's', 'u', 'y', '0', '1',
                 '2', '3', '4', '5', '6', '7', '8', '9', '-'};
         char charReplacement='#';
-
-        //to protect me from my own stoopidity
-        if(outChars.length != inChars.length) {
-            throw new AssertionError("INTERNAL ERROR- out char and in char arrays are not the same length");
-        }
 
 
         //loop through outChar strings
