@@ -565,7 +565,9 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
 
     /**
      * Returns a lowercase version of the input without accent marks or letter variants.<br><br>
+     *
      * Helper to createBlocks
+     *
      * @param input letter to remove diacritics from
      * @return copy of input without diacritics
      */
@@ -579,9 +581,8 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
         //Not like the 'final' declaration will save the array indices from tampering,
         //but I hope that it increases speed a little.
         final String[] outChars={"àáâãäå", "ç", "ð", "èéëêœæ", "ìíîï", "òóôõöø", "ǹńñň",
-                "ß", "ùúûü", "ýÿ", "⁰₀", "¹₁", "²₂", "³₃", "⁴₄", "⁵₅", "⁶₆", "⁷₇", "⁸₈", "⁹₉", "—"};
-        final char[] inChars={'a', 'c', 'd', 'e', 'i', 'o', 'n', 's', 'u', 'y', '0', '1',
-                '2', '3', '4', '5', '6', '7', '8', '9', '-'};
+                "ß", "ùúûü", "ýÿ", "—"};
+        final char[] inChars={'a', 'c', 'd', 'e', 'i', 'o', 'n', 's', 'u', 'y', '-'};
         char charReplacement='#';
 
 
@@ -603,6 +604,18 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
 
         return charReplacement;
 
+    }
+
+
+    /**
+     * Returns the value that removeDiacritics returns.<br><br>
+     *
+     * For unit testing purposes only!
+     * @param input input character to test
+     * @return return value of removeDiacritics
+     */
+    public char removeDiacritics_Testing(char input) {
+        return removeDiacritics(input);
     }
 
 

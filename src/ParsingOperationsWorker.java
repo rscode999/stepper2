@@ -173,7 +173,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
             assertPreconditions();
         }
         catch (Throwable t) {
-            System.err.println("WARNING: OPERATION PRECONDITIONS BROKEN");
+            System.err.println("OPERATION PRECONDITIONS BROKEN. WRONG CONSTRUCTOR USED");
             throw t;
         }
 
@@ -495,14 +495,14 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
         int currentChar=0;
         int blocksEncrypted = startBlocks;
 
-        for(int b = 0; b<=text.length()- StepperAppFields.BLOCK_LENGTH; b+= StepperAppFields.BLOCK_LENGTH) {
+        for(int b = 0; b <= (text.length() - StepperAppFields.BLOCK_LENGTH); b += StepperAppFields.BLOCK_LENGTH) {
             if(isCancelled()) {
                 return "";
             }
 
             System.arraycopy(keyBlockBasePositions, 0, keyBlockReadPositions, 0, keyBlockReadPositions.length);
 
-            for(int t = b; t<(b+ StepperAppFields.BLOCK_LENGTH); t++) {
+            for(int t = b; t<(b + StepperAppFields.BLOCK_LENGTH); t++) {
 
                 currentChar=(int)text.charAt(t) - 97;
 
@@ -649,12 +649,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
                 nonAlphas[i]=(char)0;
             }
         }
-      /*
-      for(int i=0; i<nonAlphas.length; i++) {
-        System.out.print((int)nonAlphas[i] + " ");
-      }
-      System.out.println();
-      */
+
         return nonAlphas;
     }
 
@@ -677,7 +672,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
         byte[] output = setKeyBlockPositions(blocks);
 
         //Simulate moving through the remainder of the blocks
-        for(int b = 0; b<blocks% StepperAppFields.BLOCK_LENGTH; b++) {
+        for(int b = 0; b < blocks%StepperAppFields.BLOCK_LENGTH; b++) {
             //Increment each index of the output
             for(int i=0; i<output.length; i++) {
                 output[i] = (byte) ((output[i] + StepperAppFields.getKeyBlockIncrementIndex(i)) % StepperAppFields.BLOCK_LENGTH);
@@ -869,14 +864,14 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
 
 
     /**
-     * Returns the key block positions for the given text length.<br><br>
+     * Returns the key block positions of unenhanced (v1) operations for the given text length.<br><br>
      *
      * Important note: this method uses text length, not the number of blocks that are in the text.<br><br>
      *
      * Helper to initializeKeyBlockPositions and the operation functions.
      *
-     * @param textLength length of text (must be at least 0)
-     * @return key block positions
+     * @param textLength length of text. Must be at least 0
+     * @return key block positions as a byte array
      */
     private byte[] setKeyBlockPositions(long textLength) {
         //Check text length: must be non-negative
@@ -888,23 +883,21 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
         long quotient=textLength;
         double decimalPortion=0;
 
-        //Eliminate block spill-overs.
+        //Eliminate overflows
         quotient = quotient % ((long)Math.pow(StepperAppFields.BLOCK_LENGTH, StepperAppFields.BLOCK_COUNT));
 
-        //Divide quotient and take only the portion to the right of the decimal point
-        decimalPortion = (double)quotient / StepperAppFields.BLOCK_LENGTH - quotient / StepperAppFields.BLOCK_LENGTH;
-        //Divide quotient and take only the portion to the left of the decimal point
+        //Divide quotient and take only the portion to the left of the decimal point to eliminate the least significant digit
         quotient = quotient / StepperAppFields.BLOCK_LENGTH;
 
 
-        //Much like converting a base-10 number to a base-BLOCK_LENGTH number
+        //Much like converting a base-10 number to a base-BLOCK_LENGTH number, except without the least significant digit
         //The lowest value digits end up on the right side.
         for(int i=result.length-1; i>=0; i--) {
 
             //Divide quotient and take only the portion to the right of the decimal point
             decimalPortion = (double)quotient / StepperAppFields.BLOCK_LENGTH - quotient / StepperAppFields.BLOCK_LENGTH;
             //Divide quotient and keep only the portion to the left of the decimal point
-            quotient = quotient / (long) StepperAppFields.BLOCK_LENGTH;
+            quotient = quotient / (long)StepperAppFields.BLOCK_LENGTH;
 
             //Convert the decimal portion to a digit and add to the result
             result[i] = (byte)(Math.round(decimalPortion*StepperAppFields.BLOCK_LENGTH));
@@ -921,6 +914,22 @@ public class ParsingOperationsWorker extends SwingWorker<String,String> {
         }
 
         return output;
+    }
+
+
+    /**
+     * Returns the output of `setKeyBlockPositions`.<br><br>
+     *
+     * setKeyBlockPositions gives the key block positions of unenhanced (v1)
+     * operations for the given text length.<br><br>
+     *
+     * FOR TESTING PURPOSES ONLY!
+     *
+     * @param textLength length to test
+     * @return output of setKeyBlockPositions
+     */
+    public byte[] setKeyBlockPositions_Testing(long textLength) {
+        return setKeyBlockPositions(textLength);
     }
 
 }

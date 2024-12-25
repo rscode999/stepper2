@@ -2,7 +2,7 @@ import org.junit.jupiter.api.*;
 import java.util.Arrays;
 
 /**
- * Class to test the setWorkerLoads method in the StepperFunctions class.<br><br>
+ * Class to test the setWorkerLoads method of a ParsingBoss.<br><br>
  *
  * Note: As long as the thread loads are evenly distributed, the result is acceptable.
  */

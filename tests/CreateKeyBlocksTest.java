@@ -2,7 +2,7 @@ import org.junit.jupiter.api.*;
 import static org.junit.Assert.assertThrows;
 
 /**
- * Class to test the createKeyBlocks method. Some tests may fail because the method loads higher indices first.
+ * Class to test the `createKeyBlocks` method of a `ParsingBoss`.
  */
 public class CreateKeyBlocksTest {
 
@@ -13,7 +13,7 @@ public class CreateKeyBlocksTest {
      * equal up to and including the value at array1[arrayIndex][subarrayIndex]. Returns false otherwise<br><br>
      *
      * Example: if array1 is [[1,2,3], [4,5,6]] and array2 is [[1,2,3], null], the method automatically returns false.<br>
-     * Example: if array1 is [[1,2,3], [4,5,6]] and array2 is [[1,2,3], [4,5,6,7]], the method automatically returns false.<br>
+     * Example: if array1 is [[1,2,3], [4,5,6]] and array2 is [[0,1,2,3], [4,5,6,7]], the method automatically returns false.<br>
      *
      * Example: if arrayIndex=2 and subarrayIndex=1 for a 4x3 array:<br>
      * [[*,*,*],<br>
@@ -28,7 +28,7 @@ public class CreateKeyBlocksTest {
      * @param array2 second array to compare
      * @param arrayIndex highest value index in the arrays to compare. Value must be on [0, array1.length)
      * @param subarrayIndex highest value in the subarrays to compare. Value must be on [0, array1[0].length)
-     * @return true if array1 and array2 are equal, false otherwise
+     * @return true if array1 and array2 are equal up to the given index, false otherwise
      */
     private boolean arraysEqual(byte[][] array1, byte[][] array2, int arrayIndex, int subarrayIndex) {
 
@@ -51,10 +51,10 @@ public class CreateKeyBlocksTest {
 
         //Idiot check
         if(arrayIndex>=array1.length || subarrayIndex>=array1[0].length) {
-            throw new IllegalArgumentException("READ THE SPEC BRO. HINT: ARRAY INDICES START FROM 0");
+            throw new AssertionError("READ THE SPEC BRO. HINT: ARRAY INDICES START FROM 0");
         }
         if(arrayIndex<0 || subarrayIndex<0) {
-            throw new IllegalArgumentException("READ THE SPEC BRO. ARRAY INDICES CANNOT BE NEGATIVE");
+            throw new AssertionError("READ THE SPEC BRO. ARRAY INDICES CANNOT BE NEGATIVE");
         }
 
         //Compare the lengths
@@ -106,31 +106,32 @@ public class CreateKeyBlocksTest {
     /**
      * Returns true if `array` is not null, all of `array`'s subarrays are not null, and all indices in `array`
      * are on [0,25]. Returns false otherwise
+     *
      * @param array array to check
      * @return true if all values on [0,25], false otherwise
      */
-    private boolean valuesInRange(byte[][] array) {
+    private boolean valuesOutOfRange(byte[][] array) {
         //Check if entire array is null
         if(array==null) {
-            return false;
+            return true;
         }
 
         //Check each subarray
         for(int a=0; a<array.length; a++) {
             //Check if subarray is null
             if(array[a]==null) {
-                return false;
+                return true;
             }
 
             //Check if each index is on [0,25]
             for(int i=0; i<array[a].length; i++) {
                 if(array[a][i]<0 || array[a][i]>25) {
-                    return false;
+                    return true;
                 }
             }
         }
 
-        return true;
+        return false;
     }
 
 
@@ -149,7 +150,7 @@ public class CreateKeyBlocksTest {
      *  [0,1,2]]<br>
      * All indices with asterisks should be compared between the two arrays. All others should be ignored.<br>
      *
-     * If arrayIndex is -1, this method skips the index comparison step and only checks if all result indices are on [0,25]
+     * If arrayIndex is -1, this method does not do index comparison and only checks if all result indices are on [0,25]
      *
      * @param expected first array to compare
      * @param result second array to compare
@@ -157,12 +158,12 @@ public class CreateKeyBlocksTest {
      * @param subarrayIndex highest value index in the subarrays to compare
      */
     private void printAssert(byte[][] expected, byte[][] result, int arrayIndex, int subarrayIndex) {
-        if(!valuesInRange(expected)) {
+        if(valuesOutOfRange(expected)) {
             //Print error message
             throw new AssertionError("Postcondition violation in expected result");
         }
 
-        if(!valuesInRange(result)) {
+        if(valuesOutOfRange(result)) {
             //Print output array
             if(result==null) {
                 throw new AssertionError("Test failed- result is null");
@@ -223,21 +224,6 @@ public class CreateKeyBlocksTest {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //TESTS
 
-    /*
-    @DisplayName("Calling createKeyBlocks with a null string input, or a non-positive blocks or charsPerBlock, " +
-            "should result in an IllegalArgumentException")
-    @Test
-    void testAssertions() {
-        StepperFunctions fcns = new StepperFunctions();
-        assertThrows(IllegalArgumentException.class, () -> fcns.createKeyBlocks(null, 1, 8));
-        assertThrows(IllegalArgumentException.class, () -> fcns.createKeyBlocks("abc", 0, 8));
-        assertThrows(IllegalArgumentException.class, () -> fcns.createKeyBlocks("abc", -1, 8));
-        assertThrows(IllegalArgumentException.class, () -> fcns.createKeyBlocks("abc", -59, 8));
-        assertThrows(IllegalArgumentException.class, () -> fcns.createKeyBlocks("abc", 2, 0));
-        assertThrows(IllegalArgumentException.class, () -> fcns.createKeyBlocks("abc", 2, -1));
-        assertThrows(IllegalArgumentException.class, () -> fcns.createKeyBlocks("abc", 2, -265));
-    }
-     */
 
     @DisplayName("Calling createKeyBlocks on a string whose length equals blocks*charsPerBlock should create a byte[][] array " +
             "with all characters' numerical values loaded in sequential order")
@@ -477,7 +463,7 @@ public class CreateKeyBlocksTest {
         byte[][] result = testBoss.createKeyBlocks_Testing(input, 2, 4);
         printAssert(expected, result, 1, 3);
 
-        input = "ýßǹń ñňÿð ë";
+        input = "ýßǹń ñňÿð ë"; //should be treated as "ysnn nnyd e"
         expected = new byte[][] {{24,18,13}, {13,13,13}, {24,3,4}};
         result = testBoss.createKeyBlocks_Testing(input, 3, 3);
         printAssert(expected, result, 2, 2);

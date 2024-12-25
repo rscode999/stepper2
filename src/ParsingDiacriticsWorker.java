@@ -18,6 +18,7 @@ public class ParsingDiacriticsWorker extends SwingWorker<String,String> {
 
     /**
      * Creates a ParsingDiacriticsWorker called `name` and loads it with `text`
+     *
      * @param text String to remove diacritics from. Non-null
      * @param name custom name for this Worker. Non-null and cannot equal the string "null"
      */
@@ -31,6 +32,16 @@ public class ParsingDiacriticsWorker extends SwingWorker<String,String> {
 
         this.text = text;
         this.name = name;
+    }
+
+
+    /**
+     * FOR UNIT TESTING ONLY! Creates a new ParsingDiacriticsWorker with garbage fields.
+     * BREAKS OPERATION PRECONDITIONS!
+     */
+    public ParsingDiacriticsWorker() {
+        this.text = null;
+        this.name = null;
     }
 
 
@@ -57,6 +68,12 @@ public class ParsingDiacriticsWorker extends SwingWorker<String,String> {
      */
     @Override
     protected String doInBackground() {
+        //Idiot check
+        if(text==null || name==null || name.equals("null")) {
+            System.err.println("OPERATION PRECONDITIONS ARE NOT MET. WRONG CONSTRUCTOR USED");
+            throw new AssertionError("Preconditions broken");
+        }
+
         return removeDiacritics(text);
     }
 
@@ -117,10 +134,12 @@ public class ParsingDiacriticsWorker extends SwingWorker<String,String> {
      *
      * Any character that is not transformed by the private helper method `removeDiacritics(char)` is not changed.
      *
-     * @param input text to remove diacritics from
+     * @param input text to remove diacritics from. Cannot be null
      * @return lowercase version of input without diacritics
      */
     private String removeDiacritics(String input) {
+        //Precondition is enforced in the method constructor
+
         StringBuilder output = new StringBuilder(input.length());
         for(int i=0; i<input.length(); i++) {
             if(this.isCancelled()) {
@@ -132,4 +151,16 @@ public class ParsingDiacriticsWorker extends SwingWorker<String,String> {
         return output.toString();
     }
 
+
+    /**
+     * Returns the value returned by `removeDiacritics` for the given input<br><br>
+     *
+     * FOR UNIT TESTS ONLY!
+     *
+     * @param input input to test
+     * @return value from `removeDiacritics`
+     */
+    public String removeDiacritics_Testing(String input) {
+        return removeDiacritics(input);
+    }
 }

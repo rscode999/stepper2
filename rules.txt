@@ -1,9 +1,10 @@
-SWING PROJECT 3 RULES
-swing-proj-3 is a project of rules and regulations! Read this document thoroughly before starting work on the project!
+PROJECT RULES
+This is a project of rules and regulations! Read this document thoroughly before starting work on the project!
 As a friendly reminder, failure to follow the rules means I will track you down and [REDACTED].
 
 
-Order of rule sections:
+
+Table of contents:
 -Docstring Rules
 -GUI Setup Method Rules
 -Method Rules
@@ -16,26 +17,29 @@ Order of rule sections:
 Docstring Rules
 All docstrings must follow the template given below:
 /**
- * One-line summary of the method, followed by two "<br>"" tags.
+ * One-line summary of the method or class, followed by two "<br>" tags.
  *
- * Additional details of the method. This may span multiple lines.
+ * Additional details of the method or class. This may span multiple lines.
  * If each line exceeds ~80 characters (where a significant portion of the text crosses the thin white line on the right of the screen),
  * any additional text must be on a new line.
  * Any new lines must use the "<br>" tag.
  *
  * One or two lines of important notice for clients, i.e. preconditions not enforceable by exceptions.
- * This area must contain "Helper to <parent method name>" if the method is a private helper to another method.
- * -If included, the additional details section must end with two "<br>" tags.
+ * This section must contain "Helper to <parent method name>" if the method is a private helper to another method.
+ * -If an important notice section is included, the additional details section must end with two "<br>" tags.
  *
- * @param parameter1 the first parameter. Parameter descriptions are required!
+ * @param parameter1 the first parameter, followed by a period. Then state any preconditions on the parameter
  * @param parameter2...
- * @return some value. Return value descriptions are required!
+ * @return some value. Return value descriptions are required! Must come immediately after the parameters
  * @throws Exception... Newly thrown exceptions are required!
  * Exception description is not needed if throwing an Exception that an overridden function throws,
  * or if the Exception is unlikely to be thrown (i.e. ExecutionException and InterruptedException in a SwingWorker)
+ *
+ * NOTE: All parameter, return value, and exception entries must have a description, even if the associated values are trivial!
  */
 
-
+Class docstrings need not include parameters, return values, or exception information.
+Docstrings for fields can contain only a one-line summary.
 
 
 
@@ -44,7 +48,7 @@ All docstrings must follow the template given below:
 GUI Setup Method Rules
 
 Most, if not all, of the GUI setup methods in the main application class will return a JPanel.
-This JPanel may have a single-letter name, although this practice is not recommended.
+The outputted JPanel may have a single-letter name, although this practice is not recommended.
 
 All constraints must be declared before any JComponents are added.
 
@@ -80,8 +84,8 @@ Method Rules
 Unless otherwise specified, all methods must not modify any of their inputs.
 All modifications must occur on defensive copies.
 
-If a class constructor takes a non-primitive type as an input, the constructor must load the class with a deep copy
-of the input.
+If a class constructor takes a non-primitive type as an input, the constructor must load the corresponding field with a
+deep copy of the input.
 
 
 
@@ -90,21 +94,31 @@ of the input.
 
 
 Class Structure Rules
-Classes must match the template below. The number of comment slash lines is important.
+Classes must match the template below. The number of comment lines is important.
 
 /**
  * Docstring that conforms to the Docstring Rules
+ *
+ * NOTE: Since class definitions have no inputs or return values,
+ * a class docstring does not include any parameters, return values, or exceptions.
  */
  class MyClass... {
 
     Constants, whose names are in all caps, with a descriptive name.
-        Example: final static int MAX_HEIGHT = 1000;
+        Must be declared in a logical order. If no logical order exists, declare in alphabetical order by variable name.
+
+        Example:
+        final String DEFAULT_INPUT = "Hello world";
+        final int MAX_HEIGHT = 1000;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     Variable fields
         JComponent fields should come last.
-        Must be declared in a logical order. If no logical order exists, declare in alphabetical order.
+        Must be declared in a logical order. If no logical order exists, declare in alphabetical order by variable name.
+
+
+    NOTE: All constant and variable fields MUST HAVE DOCSTRINGS!
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -113,8 +127,8 @@ Classes must match the template below. The number of comment slash lines is impo
     If the class is short (~100 lines or shorter), there may be two lines of comment slashes instead of four lines.
 
 
-    Class constructor(s). If the class has multiple constructors, the constructors with the fewest arguments go first.
-        ALL CLASSES must have an explicitly defined constructor, even if it does nothing.
+    Class constructor(s). If the class has multiple constructors, the most frequently used constructors are first.
+        ALL CLASSES must have an explicitly defined constructor, even if the constructor does nothing.
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
