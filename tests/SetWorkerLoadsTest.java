@@ -41,7 +41,7 @@ public class SetWorkerLoadsTest {
      * @param expected expected result
      * @param result output from test
      */
-    public void printAssert(String[] expected, String[] result) {
+    private void printAssert(String[] expected, String[] result) {
         if (!arrayEquals(expected, result)) {
             System.err.println("Expected: " + Arrays.toString(expected));
             System.err.println("Result: " + Arrays.toString(result));
@@ -55,6 +55,33 @@ public class SetWorkerLoadsTest {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //TESTS
+
+    @DisplayName("When blockCount is 1, setWorkerLoads should return a String array with the" +
+            " entire contents of its String input in its first index, regardless of the minimum block size")
+    @Test
+    void testBlockCount1() {
+        ParsingBoss b = new ParsingBoss();
+
+        String s = "abcdefabcdefabcdefabcdef";
+        String[] result = b.setWorkerLoads_Testing(s, 1, 8);
+        String[] expected = new String[]{"abcdefabcdefabcdefabcdef"};
+        printAssert(expected, result);
+
+        s = "abcdefgh";
+        result = b.setWorkerLoads_Testing(s, 1, 2);
+        expected = new String[]{"abcdefgh"};
+        printAssert(expected, result);
+
+        s = "abcde";
+        result = b.setWorkerLoads_Testing(s, 1, 1);
+        expected = new String[]{"abcde"};
+        printAssert(expected, result);
+
+        s = "";
+        result = b.setWorkerLoads_Testing(s, 1, 999);
+        expected = new String[]{""};
+        printAssert(expected, result);
+    }
 
 
     @DisplayName("When setWorkerLoads is called and blockCount is the text's length divided by minBlockSize, the output should " +
@@ -100,6 +127,7 @@ public class SetWorkerLoadsTest {
         printAssert(expected, result);
     }
 
+
     @DisplayName("When setWorkerLoads is called and blockCount is the text's length divided by 'm', a multiple of minBlockSize, " +
             "the output should hold text.length()/m strings of length m.")
     @Test
@@ -127,33 +155,6 @@ public class SetWorkerLoadsTest {
         s = "abababababababababababababababababababababababab";
         expected = new String[]{"abababababab", "abababababab", "abababababab", "abababababab"};
         result = b.setWorkerLoads_Testing(s, 4, 2);
-    }
-
-    @DisplayName("When blockCount is 1, setWorkerLoads should return a String array with the" +
-            " entire contents of its String input in its first index, regardless of the minimum block size")
-    @Test
-    void testBlockCount1() {
-        ParsingBoss b = new ParsingBoss();
-
-        String s = "abcdefabcdefabcdefabcdef";
-        String[] result = b.setWorkerLoads_Testing(s, 1, 8);
-        String[] expected = new String[]{"abcdefabcdefabcdefabcdef"};
-        printAssert(expected, result);
-
-        s = "abcdefgh";
-        result = b.setWorkerLoads_Testing(s, 1, 2);
-        expected = new String[]{"abcdefgh"};
-        printAssert(expected, result);
-
-        s = "abcde";
-        result = b.setWorkerLoads_Testing(s, 1, 1);
-        expected = new String[]{"abcde"};
-        printAssert(expected, result);
-
-        s = "";
-        result = b.setWorkerLoads_Testing(s, 1, 999);
-        expected = new String[]{""};
-        printAssert(expected, result);
     }
 
 
@@ -188,6 +189,7 @@ public class SetWorkerLoadsTest {
         printAssert(expected, result);
     }
 
+
     @DisplayName("When blockCount is not the text length divided by minBlockSize and blockCount is more than 2," +
             " the output's final index should take the remainder")
     @Test
@@ -213,6 +215,7 @@ public class SetWorkerLoadsTest {
         printAssert(expected, result);
     }
 
+
     @DisplayName("When blockCount divided by minBlockSize, rounded down to the nearest integer, equals 1 and " +
             "more than 2 blocks should be loaded into each output index, setWorkerLoads should load the appropriate" +
             "number of blocks (not 1 block) into each output index")
@@ -230,6 +233,7 @@ public class SetWorkerLoadsTest {
         expected = new String[]{"abcd", "abcdabcd", "abcdabcd", "abcdabcd", "abcdabc"};
         printAssert(expected, result);
     }
+
 
     @DisplayName("When blockSize is more than the text length divided by minBlockSize, all remaining strings should be empty (non-null) strings")
     @Test
@@ -266,6 +270,7 @@ public class SetWorkerLoadsTest {
         expected = new String[]{"", "", "", "", "abcdefghijabcdefghijabcdefghij"};
         printAssert(expected, result);
     }
+
 
     @DisplayName("Each block should contain `blockLength` English lowercase ASCII characters. Each block should end in an " +
             "English lowercase ASCII character")

@@ -20,7 +20,7 @@ public class SetKeyBlockPositionsTest {
      * Returns the key block positions for the given text length for unenhanced (v1) operations.<br><br>
      *
      * This is a reference implementation that is much slower than the actual method.
-     * Should be used for testing only.
+     * Use for testing only.
      *
      * @param textLength the text length to test
      * @return key block positions for the given text length
@@ -44,7 +44,7 @@ public class SetKeyBlockPositionsTest {
                     }
                 }
                 if (result[result.length - 1] >= StepperAppFields.BLOCK_LENGTH) {
-                    Arrays.fill(result, (byte) 0);
+                    Arrays.fill(result, (byte)0);
                 }
             }
         }
@@ -247,12 +247,12 @@ public class SetKeyBlockPositionsTest {
         result = w.setKeyBlockPositions_Testing(input);
         printAssert(expected, result);
 
-        input = (long)Math.pow(BLOCK_LEN,5) + BLOCK_LEN*5 - 1;
+        input = (long)Math.pow(BLOCK_LEN,4) + BLOCK_LEN*5 - 1;
         expected = setKeyBlockPositions_Reference(input);
         result = w.setKeyBlockPositions_Testing(input);
         printAssert(expected, result);
 
-        input = (long)Math.pow(BLOCK_LEN,5) + BLOCK_LEN*5;
+        input = (long)Math.pow(BLOCK_LEN,4) + BLOCK_LEN*5;
         expected = setKeyBlockPositions_Reference(input);
         result = w.setKeyBlockPositions_Testing(input);
         printAssert(expected, result);

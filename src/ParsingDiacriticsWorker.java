@@ -3,10 +3,10 @@ import javax.swing.*;
 /**
  * Worker thread that lowercases and removes diacritics from an input
  */
-public class ParsingDiacriticsWorker extends SwingWorker<String,String> {
+public class ParsingDiacriticsWorker extends SwingWorker<String,Void> {
 
     /**
-     * The text to remove diacritics from
+     * The text to remove diacritics from. Cannot be null
      */
     final private String text;
 

@@ -2,8 +2,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-
 /**
  * Class to test the method `removeDiacritics` of a `ParsingBoss`.
  */
@@ -74,9 +72,52 @@ public class RemoveDiacriticsCharTest {
         input = 'ǹ';
         bossResult = boss.removeDiacritics_Testing(input);
         Assertions.assertEquals('n', bossResult);
+
+        //One more for good measure
+        input = 'ÿ';
+        bossResult = boss.removeDiacritics_Testing(input);
+        Assertions.assertEquals('y', bossResult);
     }
 
-    //For some reason the number substitutions don't work
+
+    @DisplayName("removeDiacritics should reformat superscript and subscript numbers to ASCII equivalents")
+    @Test
+    void testNumbers() {
+        ParsingBoss boss = new ParsingBoss();
+        char bossResult;
+        char input;
+
+        //Superscript 0
+        input = '⁰';
+        bossResult = boss.removeDiacritics_Testing(input);
+        Assertions.assertEquals('0', bossResult);
+
+        //Superscript 5
+        input = '⁵';
+        bossResult = boss.removeDiacritics_Testing(input);
+        Assertions.assertEquals('5', bossResult);
+
+        //Superscript 9
+        input = '⁹';
+        bossResult = boss.removeDiacritics_Testing(input);
+        Assertions.assertEquals('9', bossResult);
+
+        //Subscript 0
+        input = '₀';
+        bossResult = boss.removeDiacritics_Testing(input);
+        Assertions.assertEquals('0', bossResult);
+
+        //Subscript 1
+        input = '₁';
+        bossResult = boss.removeDiacritics_Testing(input);
+        Assertions.assertEquals('1', bossResult);
+
+        //Subscript 9
+        input = '₉';
+        bossResult = boss.removeDiacritics_Testing(input);
+        Assertions.assertEquals('9', bossResult);
+    }
+
 
     @DisplayName("removeDiacritics should reformat selected symbols to ASCII equivalents")
     @Test

@@ -6,20 +6,20 @@ import static java.awt.GridBagConstraints.*;
 /**
  * Class to display and run an instance of StepperApp. Serves as the main application class.<br><br>
  *
- * Uses a StepperAppFields and StepperFunctions instance to hold its constants and variables not related to the GUI,
+ * Uses a StepperAppFields instance to hold its constants and variables not related to the GUI,
  * along with methods to operate on them.<br>
  * Contains a main method. The only class in this project permitted to have a main method.<br>
  *
- * Most of the work occurs in creating the various screens. The screen creation methods are called in the constructor.<br>
+ * Most methods in this class create the various screens. The screen creation methods are called in the constructor.<br>
  *
  * Please follow the rules listed in "rules.txt". Failure to do so means I will track you down and [REDACTED]<br><br>
  *
- * Version 1.1 was completed on June 28, 2024.
+ * Version 1.1 was completed on June 28, 2024.<br>
  * Version 2.0 with enhanced encryption was completed on July 18, 2024.
  */
 public class StepperApp extends JFrame {
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //CONSTANTS: arranged in alphabetical order by datatype
 
     /**
@@ -91,7 +91,7 @@ public class StepperApp extends JFrame {
      * to add custom values to its selection options.<br><br>
      *
      * All default thread selection options (except for the first two indices), when Integer.parseInt is called on them,
-     * must return a value on the interval [1, StepperFunctions.MAX_THREADS].
+     * must return a value on the interval [1, StepperAppFields.MAX_THREADS] without throwing an exception.
      */
     final private static String[] THREAD_SELECTION_OPTIONS = new String[] {"Select number of threads (default: 1)", "Custom...",
             "2", "4", "6", "8", "10", "12", "16", "20", "24", "32", "48", "64"};
@@ -178,9 +178,16 @@ public class StepperApp extends JFrame {
 
 
     /**
-     * Loading text
+     * Text giving additional information about current operations on the processing screen.
+     * Goes below the processing stage text.
      */
-    private JLabel loadingStatusText;
+    private JLabel processingProgressText;
+
+    /**
+     * Text giving the current stage of operations on the processing screen
+     */
+    private JLabel processingStageText;
+
 
     /**
      * Header for the current screen
@@ -247,7 +254,7 @@ public class StepperApp extends JFrame {
         for(int i=2; i<THREAD_SELECTION_OPTIONS.length; i++) {
             try {
                 int currentValue = Integer.parseInt(THREAD_SELECTION_OPTIONS[i]);
-                if(currentValue<1 || currentValue> StepperAppFields.MAX_THREADS) {
+                if(currentValue<1 || currentValue>StepperAppFields.MAX_THREADS) {
                     throw new AssertionError("All default thread selection options except for the first two must represent integers"
                     + " on the interval [1, " + StepperAppFields.MAX_THREADS + "]");
                 }
@@ -324,6 +331,16 @@ public class StepperApp extends JFrame {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //UTILITIES
 
+    
+    /**
+     * Returns the current contents of the bottom text input
+     * @return contents of `textInputBottom`
+     */
+    public String bottomTextInputValue() {
+        return textInputBottom.getText();
+    }
+
+
     /**
      * Returns the app's fields
      *
@@ -335,35 +352,68 @@ public class StepperApp extends JFrame {
 
 
     /**
+     * Appends to or overwrites the contents of the App's output key field, on the Results screen.<br><br>
+     *
+     * If `appending` is true, `key` is appended to the key field's contents.<br>
+     * If `appending` is false, `key` is set to the key field's contents, overwriting the previous contents.
+     *
+     * @param key the new key contents
+     * @param appending true if appending to current contents, false if replacing contents
+     */
+    public void setOutputKeyArea(String key, boolean appending) {
+        if(appending) {
+            outputKey.append(key);
+        }
+        else {
+            outputKey.setText(key);
+        }
+    }
+
+    /**
+     * Appends to or overwrites the contents of the App's output text area, on the Results screen.<br><br>
+     *
+     * If `appending` is true, `text` is appended to the text field's contents.<br>
+     * If `appending` is false, `text` is set to the text field's contents, overwriting the previous contents.
+     *
+     * @param text the new key contents
+     * @param appending true if appending to current contents, false if replacing contents
+     */
+    public void setOutputTextArea(String text, boolean appending) {
+        if(appending) {
+            outputText.append(text);
+        }
+        else {
+            outputText.setText(text);
+        }
+    }
+
+
+    /**
      * Returns the current contents of the top text input
      * @return contents of `textInputTop`
      */
-    public String topInputValue() {
+    public String topTextInputValue() {
         return textInputTop.getText();
     }
 
 
-
     /**
-     * Sets the loading status text to `newText`.
+     * Sets the processing progress text, which holds additional information about operations in progress, to `newText`.
      *
-     * @param newText what to display on the loading text
+     * @param newText what to display on the progress text
      */
-    public void setLoadingStatusText(String newText) {
-        loadingStatusText.setText(newText);
+    public void setProcessingProgressText(String newText) {
+        processingProgressText.setText(newText);
     }
 
     /**
-     * Sets the text and key output to hold `text` and `key`, respectively
+     * Sets the processing stage text, which holds general information about operations in progress, to `newText`.
      *
-     * @param text new text to be in the output
-     * @param key new key to be in the output
+     * @param newText what to display on the stage text
      */
-    public void setOutput(String text, String key) {
-        outputText.setText(text);
-        outputKey.setText(key);
+    public void setProcessingStageText(String newText) {
+        processingStageText.setText(newText);
     }
-
 
 
     /**
@@ -392,8 +442,8 @@ public class StepperApp extends JFrame {
     }
 
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //CARD LAYOUT SETUP METHODS: Should be private and called only in the constructor.
 
 
@@ -561,7 +611,7 @@ public class StepperApp extends JFrame {
 
 
         //Screen header
-        textHeader = new JLabel("Stepper App v2.4");
+        textHeader = new JLabel("Stepper App v2.4.1");
         textHeader.setFont(LARGE_FONT);
         constraints.gridx=0;
         constraints.gridy=0;
@@ -807,9 +857,8 @@ public class StepperApp extends JFrame {
             }
 
             //Load key
-            fields.setKey(textInputBottom.getText());
             //Check the key if it's empty and decryption is selected
-            if(fields.key().length()<=0 && operationModeSelector.getSelectedItem().equals(OPERATION_SELECTION_OPTIONS[2])) {
+            if(textInputBottom.getText().length()<=0 && operationModeSelector.getSelectedItem().equals(OPERATION_SELECTION_OPTIONS[2])) {
                 //Ask user to continue and take the user's choice
                 int choice = JOptionPane.showConfirmDialog(this,
                         "The decryption key will be randomized. Continue?", "Input warning", JOptionPane.YES_NO_OPTION);
@@ -856,12 +905,13 @@ public class StepperApp extends JFrame {
             //Yeet the threads
             if(fields.loginCredentials() != 0) {
                 fields.setThreadCount(0);
-                fields.setText("");
-                fields.setKey("");
+                textInputTop.setText("");
+                textInputBottom.setText("");
             }
 
             //Reset the progress
-            setLoadingStatusText("Loading input...");
+            setProcessingStageText("Loading input...");
+            setProcessingProgressText("");
 
             //Make the main thread
             executionDispatchThread = new ParsingDispatcher(this, encrypting, punctMode, filename);
@@ -910,18 +960,20 @@ public class StepperApp extends JFrame {
 
                 //Take input. If not a valid integer, error message
                 try {
-                    fields.setThreadCount(Integer.parseInt(customInput));
+                    int newCount = Integer.parseInt(customInput);
+                    fields.setThreadCount(newCount);
 
                     //For some reason the setThreadCount method allows 0 as an acceptable input
                     if(Integer.parseInt(customInput)==0) {
-                        throw new AssertionError();
+                        throw new NumberFormatException();
                     }
 
                     //Add the new value to the box
-                    threadCountSelector.insertItemAt(customInput, 1);
-                    threadCountSelector.setSelectedItem(customInput);
+                    threadCountSelector.insertItemAt(String.valueOf(newCount), 1);
+                    threadCountSelector.setSelectedItem(String.valueOf(newCount));
                 }
-                catch(AssertionError e) {
+                //Do a popup for an invalid input
+                catch(NumberFormatException e) {
                     threadCountSelector.setSelectedItem(THREAD_SELECTION_OPTIONS[0]);
                     JOptionPane.showMessageDialog(this, "The input must be an integer between 1 and " + StepperAppFields.MAX_THREADS,
                             "Invalid input", JOptionPane.ERROR_MESSAGE);
@@ -957,20 +1009,13 @@ public class StepperApp extends JFrame {
         GridBagConstraints constraints = new GridBagConstraints();
         panel.setLayout(layout);
 
-        //"Loading input" text
-//        textHeader = new JLabel("Loading input...");
-//        textHeader.setFont(MEDIUM_FONT);
-//        constraints.gridx=0;
-//        constraints.gridy=0;
-//        panel.add(textHeader, constraints);
-
         //Loading text
-        loadingStatusText = new JLabel();
-        loadingStatusText.setBackground(ACCENT_COLOR);
-        loadingStatusText.setFont(MEDIUM_FONT);
+        processingStageText = new JLabel();
+        processingStageText.setBackground(ACCENT_COLOR);
+        processingStageText.setFont(MEDIUM_FONT);
         constraints.gridx=0;
         constraints.gridy=0;
-        panel.add(loadingStatusText, constraints);
+        panel.add(processingStageText, constraints);
 
         //Spacer
         JPanel textHeaderSpacer = new JPanel();
@@ -979,6 +1024,21 @@ public class StepperApp extends JFrame {
         constraints.gridx=0;
         constraints.gridy=2;
         panel.add(textHeaderSpacer, constraints);
+
+        //Progress text
+        processingProgressText = new JLabel("potato");
+        processingProgressText.setFont(MEDIUM_FONT);
+        constraints.gridx=0;
+        constraints.gridy=3;
+        panel.add(processingProgressText, constraints);
+
+        //Spacer
+        JPanel procCompletionBarSpacer = new JPanel();
+        procCompletionBarSpacer.setBackground(INPUT_BACKGROUND_COLOR);
+        procCompletionBarSpacer.setPreferredSize(new Dimension((int) (APP_DIMENSIONS.width/2.0), (int) (APP_DIMENSIONS.height/16.0)));
+        constraints.gridx=0;
+        constraints.gridy=4;
+        panel.add(procCompletionBarSpacer, constraints);
 
         //Cancel button: uses the utility button because the enter button keeps its text from the user input screen
         utilityButton = new JButton("Cancel");
@@ -990,7 +1050,7 @@ public class StepperApp extends JFrame {
             //The thread handles the screen change.
         });
         constraints.gridx=0;
-        constraints.gridy=3;
+        constraints.gridy=5;
         panel.add(utilityButton, constraints);
 
         return panel;
@@ -1088,9 +1148,10 @@ public class StepperApp extends JFrame {
             outputKey.setText("");
             textInputTop.setText("");
             textInputBottom.setText("");
-            fields.setText("");
-            fields.setKey("");
+            setOutputKeyArea("", false);
+            setOutputTextArea("", false);
             executionDispatchThread = null;
+            processingProgressText.setText("");
             setScreen("LOGIN");
         });
         constraints.gridx=0;
@@ -1100,11 +1161,15 @@ public class StepperApp extends JFrame {
         return panel;
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //MAIN
+
+
 
     /**
      * Creates a StepperApp and runs it.

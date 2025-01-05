@@ -12,24 +12,24 @@ public class StepperAppFields {
     /**
      * Number of blocks to use in processes. Must be positive. Highly recommended to be a prime number.
      */
-    final public static int BLOCK_COUNT = 7;
+    final public static int BLOCK_COUNT = 5;
 
     /**
      * Length of each block to use in processes. Must be positive. Highly recommended to be a prime number, or at least relatively prime with BLOCK_COUNT.
      */
-    final public static int BLOCK_LENGTH = 19;
+    final public static int BLOCK_LENGTH = 22;
 
 
     /**
      * Name of the default text input file. Must end in ".txt".
      */
-    final public static String DEFAULT_INPUT_FILE = "input.txt";
+    final public static String DEFAULT_INPUT_FILENAME = "input.txt";
 
 
     /**
      * Amount to rotate each block. Length must equal BLOCK_COUNT. Must be private. Indices are accessed through a getter method.
      */
-    final private static byte[] KEY_BLOCK_INCREMENTS = {2,3,5,7,11,13,17};
+    final private static byte[] KEY_BLOCK_INCREMENTS = {2,3,5,7,11};
 
 
     /**
@@ -63,16 +63,6 @@ public class StepperAppFields {
 
 
     /**
-     * Holds the input text. Can't be null
-     */
-    private String text;
-
-    /**
-     * Holds the key. Can't be null
-     */
-    private String key;
-
-    /**
      * Holds the result from the login function
      */
     private byte loginCredentials;
@@ -98,8 +88,6 @@ public class StepperAppFields {
      */
     public StepperAppFields() {
         loginCredentials = 127;
-        text="";
-        key="";
         threadCount = 1;
 
         assertConstantInvars();
@@ -115,12 +103,12 @@ public class StepperAppFields {
     private void assertConstantInvars() {
         if(BLOCK_COUNT<=0 || BLOCK_LENGTH<=0) throw new AssertionError("Block count and block length must be positive");
 
-        if(DEFAULT_INPUT_FILE==null
-        || DEFAULT_INPUT_FILE.length()<4
-        || DEFAULT_INPUT_FILE.endsWith(".txt")==false) throw new AssertionError("Default input file must end in \".txt\"");
+        if(DEFAULT_INPUT_FILENAME ==null
+        || DEFAULT_INPUT_FILENAME.length()<4
+        || DEFAULT_INPUT_FILENAME.endsWith(".txt")==false) throw new AssertionError("Default input file must end in \".txt\"");
 
         if(KEY_BLOCK_INCREMENTS==null
-        || KEY_BLOCK_INCREMENTS.length != BLOCK_COUNT) throw new AssertionError("Key block increment array length must equal the block count");
+        || KEY_BLOCK_INCREMENTS.length != BLOCK_COUNT) throw new AssertionError("The key block increment array's length must equal the block count");
         for(byte b : KEY_BLOCK_INCREMENTS) {
             if(b < 0) throw new AssertionError("All indices of the key block increment array must be positive");
         }
@@ -143,8 +131,6 @@ public class StepperAppFields {
      */
     private void assertVariableInvars() {
         if(MAX_THREADS <= 0) throw new AssertionError("Max thread count must be positive");
-        if(text==null) throw new AssertionError("Text cannot be null");
-        if(key==null) throw new AssertionError("Key cannot be null");
         if(threadCount<0 || threadCount>MAX_THREADS) throw new AssertionError("Thread count must be on the interval [0, " + MAX_THREADS + "]");
     }
 
@@ -158,56 +144,19 @@ public class StepperAppFields {
 
 
     /**
-     * Returns index `index` of KEY_BLOCK_INCREMENTS. If `index` is not a valid index, throws an IndexOBException.<br><br>
+     * Returns index `index` of KEY_BLOCK_INCREMENTS. If `index` is not a valid index, throws an ArrayIndexOBException.<br><br>
      *
      * Needed to prevent other methods from modifying a constant array.
      * @param index index of KEY_BLOCK_INCREMENTS to access
      * @return value at given index
-     * @throws IndexOutOfBoundsException if `index` is not on the interval [0, KEY_BLOCK_INCREMENTS.length)
+     * @throws ArrayIndexOutOfBoundsException if `index` is not on the interval [0, KEY_BLOCK_INCREMENTS.length)
      */
     public static byte getKeyBlockIncrementIndex(int index) {
         if(index<0 || index>=KEY_BLOCK_INCREMENTS.length) {
-            throw new IndexOutOfBoundsException("Index " + index + " is not on the interval [0," + (KEY_BLOCK_INCREMENTS.length-1) + "]");
+            throw new ArrayIndexOutOfBoundsException("The desired index (" + index + ") must be on the interval [0," + (KEY_BLOCK_INCREMENTS.length-1) + "]");
         }
         return KEY_BLOCK_INCREMENTS[index];
     }
-
-
-    /**
-     * Returns the contents of the `text` field
-     * @return current contents of the text field
-     */
-    public String text() {
-        return text;
-    }
-
-    /**
-     * Sets the object's `text` field to `newText`.
-     * @param newText the new text. Cannot be null
-     */
-    public void setText(String newText) {
-        if(newText==null) throw new AssertionError("New text cannot be null");
-        text = newText;
-    }
-
-
-    /**
-     * Returns the contents of the object's `key` field.
-     * @return current contents of the key field
-     */
-    public String key() {
-        return key;
-    }
-
-    /**
-     * Sets the object's `key` field to `newKey`.
-     * @param newKey the new text. Cannot be null
-     */
-    public void setKey(String newKey) {
-        if(newKey==null) throw new AssertionError("New key cannot be null");
-        key = newKey;
-    }
-
 
     /**
      * Returns the login credentials
@@ -236,11 +185,14 @@ public class StepperAppFields {
 
     /**
      * Sets the object's threadCount to `newThreadCount`.
+     * If the input is not on the interval [0, StepperAppFields.MAX_THREADS], throws a NumberFormatException.
+     *
      * @param newThreadCount new number of threads. Must be on the interval [0, StepperAppFields.MAX_THREADS]
+     * @throws NumberFormatException if `newThreadCount` is out of the valid range
      */
     public void setThreadCount(int newThreadCount) {
         if(newThreadCount<0 || newThreadCount>MAX_THREADS) {
-            throw new AssertionError("Input out of range");
+            throw new NumberFormatException("Value must be an integer on [0, " + MAX_THREADS + "]");
         }
 
         threadCount = newThreadCount;

@@ -80,14 +80,13 @@ public class ParsingDispatcher extends SwingWorker<Void,Void> {
      */
     @Override
     public String toString() {
-        return "Dispatcher, input=\"" + app.fields().text() + "\", key=" + app.fields().key() + ", encrypting=" + encrypting +
-                ", punctuation=" + punctMode;
+        return "Dispatcher, encrypting=" + encrypting + ", punctuation=" + punctMode;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * Puts the result of the Dispatcher's processing, or an empty string if cancelled, into `result`.<br><br>
+     * Puts the result of the Dispatcher's processing, or an empty string if cancelled, into the parent App.<br><br>
      *
      * WARNING: Any exceptions thrown in this method are SILENT. They will not stop the program and produce no error messages.
      */
@@ -122,27 +121,20 @@ public class ParsingDispatcher extends SwingWorker<Void,Void> {
      */
     @Override
     protected void done() {
+        //If cancelled, go back to the input screen and don't go to the results
         if(isCancelled()) {
-            System.out.println("Main execution thread cancelled");
             app.setScreen("INPUT");
+            app.setProcessingProgressText("i got cancelled :(");
+            System.out.println("Main execution thread cancelled");
         }
+        //if not, go to the result screen
         else {
-            //Check for error messages in the load. If so, present an error dialog
-            if(!(bossThread.inputErrorMessage().isEmpty())) {
-                System.out.println("Input error detected");
-                app.setScreen("INPUT");
-
-                JOptionPane.showMessageDialog(app, bossThread.inputErrorMessage(),
-                        "Load error", JOptionPane.ERROR_MESSAGE);
-            }
-            //Otherwise, set and show the results
-            else {
-                app.setOutput(app.fields().text(), app.fields().key()); //note: the Boss already loaded a formatted key into the app's key field
-                System.out.println("Main execution thread finished");
-                app.setScreen("RESULTS");
-            }
+            app.setScreen("RESULTS");
+            System.out.println("Main execution thread finished");
         }
 
+        //Just do this for the lol
         bossThread = null;
+        return;
     }
 }
