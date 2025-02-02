@@ -175,7 +175,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,Void> {
             assertPreconditions();
         }
         catch (Throwable t) {
-            System.err.println("OPERATION PRECONDITIONS BROKEN");
+            System.err.println("OPERATIONS WORKER PRECONDITIONS BROKEN. WRONG CONSTRUCTOR USED");
             System.err.println(t.toString());
             throw t;
         }
@@ -923,17 +923,21 @@ public class ParsingOperationsWorker extends SwingWorker<String,Void> {
 
 
     /**
-     * Returns the output of `setKeyBlockPositions`.<br><br>
+     * Returns the key block positions of unenhanced (v1) operations for the given text length.<br><br>
      *
-     * setKeyBlockPositions gives the key block positions of unenhanced (v1)
-     * operations for the given text length.<br><br>
+     * Important note: this method uses text length, not the number of blocks that are in the text.<br><br>
      *
      * FOR TESTING PURPOSES ONLY!
      *
-     * @param textLength length to test
-     * @return output of setKeyBlockPositions
+     * @param textLength length of text (not the number of blocks in the text). Must be at least 0
+     * @return key block positions as a byte array
      */
     public byte[] setKeyBlockPositions_Testing(long textLength) {
+        if(textLength < 0) {
+            throw new AssertionError("INVALID INPUT (possible integer overflow)- " +
+                    "the input, " + textLength + ", cannot be negative");
+        }
+
         return setKeyBlockPositions(textLength);
     }
 

@@ -9,13 +9,14 @@ import javax.swing.*;
  * -ParsingDispatchers and ParsingBosses take references to the main StepperApp because they are responsible for
  * screen changes and app attribute updates.<br>
  *
- * -Dispatchers and Bosses share error messages through the Boss's error message field.
+ * -If a problem occurs during processing that must be displayed on the main App, an error message is placed
+ * into the `errorMessage` field and used by the Dispatcher.<br><br>
  */
 public class ParsingDispatcher extends SwingWorker<Void,Void> {
 
     /**
      * The parent app that the Boss works for.
-     * This reference is needed so the Boss can change the app's screen when it finishes. Can't be null
+     * This reference is needed to update the app. Can't be null
      */
     final private StepperApp app;
 
@@ -32,16 +33,22 @@ public class ParsingDispatcher extends SwingWorker<Void,Void> {
 
 
     /**
+     * The absolute path to the input file for the Boss to read from.<br><br>
+     *
+     * If empty, the filepath to read from is StepperAppFields.DEFAULT_INPUT_FILENAME.<br>
+     * If its value is equal to StepperAppFields.TEXT_LOAD_SIGNAL, the Boss will take its input from
+     * the App's top text field.<br><br>
+     *
+     * Cannot be null
+     */
+    final private String filepath;
+
+
+    /**
      * Allowed values: 0 if including punctuation, 1 if excluding spaces, 2 if alphabetic characters only
      */
     final private byte punctMode;
 
-
-    /**
-     * The absolute path to the input file. If `filepath` is the empty string, the Boss will take its input from
-     * its parent App's top text input. Cannot be null
-     */
-    final private String filepath;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -114,17 +121,28 @@ public class ParsingDispatcher extends SwingWorker<Void,Void> {
 
 
     /**
-     * Used to change the screen through the Dispatcher's `app` reference after doInBackground finishes.<br><br>
+     * Changes the screen through the Dispatcher's `app` reference after doInBackground finishes.<br><br>
      *
-     * Before screen changes, the method checks for error signals in the parent App's key field. If so,
-     * the Dispatcher resets the screen and displays an error dialog with the App as the dialog's parent object.
+     * If the Boss reported an error, the Boss' error is fetched with the `errorMessage()` method,
+     * then displayed on the main app in a message dialog.
      */
     @Override
     protected void done() {
+        //Reset processing text (no longer needed)
+        app.setProcessingProgressText("");
+
+        //If something went wrong, display an error dialog on the main App reference
+        if(!bossThread.errorMessage().isEmpty()) {
+            app.setScreen("INPUT");
+            JOptionPane.showMessageDialog(this.app, bossThread.errorMessage(),
+                    StepperAppFields.MESSAGE_DIALOG_TITLE, JOptionPane.ERROR_MESSAGE);
+
+            return; //Very important to return now so normal operations are stopped
+        }
+
         //If cancelled, go back to the input screen and don't go to the results
         if(isCancelled()) {
             app.setScreen("INPUT");
-            app.setProcessingProgressText("i got cancelled :(");
             System.out.println("Main execution thread cancelled");
         }
         //if not, go to the result screen

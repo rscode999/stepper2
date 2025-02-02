@@ -70,7 +70,7 @@ public class ParsingDiacriticsWorker extends SwingWorker<String,Void> {
     protected String doInBackground() {
         //Idiot check
         if(text==null || name==null || name.equals("null")) {
-            System.err.println("OPERATION PRECONDITIONS ARE NOT MET. WRONG CONSTRUCTOR USED");
+            System.err.println("DIACRITICS WORKER OPERATION PRECONDITIONS ARE NOT MET. WRONG CONSTRUCTOR USED");
             throw new AssertionError("Preconditions broken");
         }
 
@@ -153,12 +153,14 @@ public class ParsingDiacriticsWorker extends SwingWorker<String,Void> {
 
 
     /**
-     * Returns the value returned by `removeDiacritics` for the given input<br><br>
+     * Returns a lowercased version of `input` without diacritics or accent marks.<br><br>
+     *
+     * Any character that is not transformed by the private helper method `removeDiacritics(char)` is not changed.<br><br>
      *
      * FOR UNIT TESTS ONLY!
      *
-     * @param input input to test
-     * @return value from `removeDiacritics`
+     * @param input text to remove diacritics from. Cannot be null
+     * @return lowercase version of input without diacritics
      */
     public String removeDiacritics_Testing(String input) {
         return removeDiacritics(input);

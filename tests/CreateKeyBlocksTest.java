@@ -1,5 +1,4 @@
 import org.junit.jupiter.api.*;
-import static org.junit.Assert.assertThrows;
 
 /**
  * Class to test the `createKeyBlocks` method of a `ParsingBoss`.
@@ -22,7 +21,9 @@ public class CreateKeyBlocksTest {
      *  [0,1,2]]<br>
      * All indices with asterisks should be compared between the two arrays. All others should be ignored.<br>
      *
-     * Note: both arrays should be tables. If any array is not a table, returns false.
+     * Note: both arrays should be tables. If any array is not a table, returns false.<br><br>
+     *
+     * Helper to printAssert.
      *
      * @param array1 first array to compare
      * @param array2 second array to compare
@@ -104,8 +105,10 @@ public class CreateKeyBlocksTest {
 
 
     /**
-     * Returns true if `array` is not null, all of `array`'s subarrays are not null, and all indices in `array`
-     * are on [0,25]. Returns false otherwise
+     * Returns true if `array` is null, any of `array`'s subarrays are null, or any index in `array`
+     * is not on the interval [0,25]. Returns false otherwise.<br><br>
+     *
+     * Helper to printAssert.
      *
      * @param array array to check
      * @return true if all values on [0,25], false otherwise
@@ -136,7 +139,8 @@ public class CreateKeyBlocksTest {
 
 
     /**
-     * Compares the two inputs and checks for equality and postcondition violation.<br><br>
+     * Compares the two inputs. Checks for equality up to and including the value at [arrayIndex][subarrayIndex],
+     * and ensures all values are on the interval [0,25].<br><br>
      *
      * If any input's index is not on [0,25], as determined by valuesInRange, prints an error message to System.err
      * and throws an AssertionError.
@@ -160,7 +164,7 @@ public class CreateKeyBlocksTest {
     private void printAssert(byte[][] expected, byte[][] result, int arrayIndex, int subarrayIndex) {
         if(valuesOutOfRange(expected)) {
             //Print error message
-            throw new AssertionError("Postcondition violation in expected result");
+            throw new AssertionError("Postcondition violation in expected output");
         }
 
         if(valuesOutOfRange(result)) {
@@ -221,7 +225,7 @@ public class CreateKeyBlocksTest {
 
 
 
-    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //TESTS
 
 
@@ -364,7 +368,7 @@ public class CreateKeyBlocksTest {
             printAssert(expected, result, 0, 5);
         }
 
-        //All randomized indices should be on [0,25] for each run, even with multiple array indices
+        //All randomized indices should be on [0,25] for each run, even across multiple array indices
         input = "abcdefg";
         expected = new byte[][] {{0,1,2,3}, {4,5,6,25}, {3,15,19,24}};
         for(int i=1; i<=100000; i++) {

@@ -20,12 +20,12 @@ All docstrings must follow the template given below:
  * One-line summary of the method or class, followed by two "<br>" tags.
  *
  * Additional details of the method or class. This may span multiple lines.
- * If each line exceeds ~80 characters (where a significant portion of the text crosses the thin white line on the right of the screen),
- * any additional text must be on a new line.
+ * If each line exceeds ~80 characters (where a significant portion of the text crosses the thin white line
+ * on the right of the screen), any additional text must be on a new line.
  * Any new lines must use the "<br>" tag.
  *
  * One or two lines of important notice for clients, i.e. preconditions not enforceable by exceptions.
- * This section must contain "Helper to <parent method name>" if the method is a private helper to another method.
+ * This section must contain "Helper to {parent method name}" if the method is a private helper to another method.
  * -If an important notice section is included, the additional details section must end with two "<br>" tags.
  *
  * @param parameter1 the first parameter, followed by a period. Then state any preconditions on the parameter
@@ -81,8 +81,7 @@ Example:
 
 Method Rules
 
-Unless otherwise specified, all methods must not modify any of their inputs.
-All modifications must occur on defensive copies.
+Unless otherwise specified, or if the method is a setter method, all methods must not modify any of their inputs.
 
 If a class constructor takes a non-primitive type as an input, the constructor must load the corresponding field with a
 deep copy of the input.
@@ -94,7 +93,7 @@ deep copy of the input.
 
 
 Class Structure Rules
-Classes must match the template below. The number of comment lines is important.
+Classes must match the template below.
 
 /**
  * Docstring that conforms to the Docstring Rules
@@ -108,7 +107,14 @@ Classes must match the template below. The number of comment lines is important.
         Must be declared in a logical order. If no logical order exists, declare in alphabetical order by variable name.
 
         Example:
+        /**
+        * The default user input, if none is provided. Cannot be null
+        */
         final String DEFAULT_INPUT = "Hello world";
+
+        /**
+        * The maximum height for the application window. Must be positive
+        */
         final int MAX_HEIGHT = 1000;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -124,7 +130,6 @@ Classes must match the template below. The number of comment lines is important.
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    If the class is short (~100 lines or shorter), there may be two lines of comment slashes instead of four lines.
 
 
     Class constructor(s). If the class has multiple constructors, the most frequently used constructors are first.
@@ -136,13 +141,15 @@ Classes must match the template below. The number of comment lines is important.
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    doInBackground, if the class extends SwingWorker.
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     Additional non-main methods
         All additional methods should be in alphabetical order by the method's name.
 
         In the case of the main application, any methods to set up the GUI (that only the constructor calls) should come first.
         These methods may appear in the order in which the user sees them, not necessarily in alphabetical order.
-        One or two comment slash lines should come between GUI setup methods and the remaining instance methods.
         GUI setup methods must follow the listed conventions!
         Example:
             private void setMenuScreen() {...}
@@ -152,10 +159,7 @@ Classes must match the template below. The number of comment lines is important.
 
             String setField(String input) {...}
 
-        Private helper methods may go immediately below the parent method.
-        They may break the alphabetical order rule.
-        These methods must have a message in their docstrings that says "Helper to <parent method name>"
-
+        Private helper methods must have a message in their docstrings that says "Helper to {parent method name}"
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

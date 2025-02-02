@@ -10,17 +10,28 @@ import static java.awt.GridBagConstraints.*;
  * along with methods to operate on them.<br>
  * Contains a main method. The only class in this project permitted to have a main method.<br>
  *
- * Most methods in this class create the various screens. The screen creation methods are called in the constructor.<br>
- *
  * Please follow the rules listed in "rules.txt". Failure to do so means I will track you down and [REDACTED]<br><br>
  *
  * Version 1.1 was completed on June 28, 2024.<br>
- * Version 2.0 with enhanced encryption was completed on July 18, 2024.
+ * Version 2.0 with enhanced encryption was completed on July 18, 2024.<br><br>
+ *
+ * For Java 21
  */
 public class StepperApp extends JFrame {
+    /*
+    ORDER OF CONTENTS:
+    Constants - alphabetical order by datatype
+    Variable Non-GUI Fields
+    GUI JComponents (Containers) - alphabetical order by datatype
+    GUI JComponents (non-Containers) - alphabetical order by datatype
+    Class Constructor
+    Utility Methods, i.e. getters, setters, helpers to the constructor - alphabetical order
+    Screen Setup Methods - in the order that the user will see the screens
+    public static void main(String[] args)
+    */
 
-    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //CONSTANTS: arranged in alphabetical order by datatype
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //CONSTANTS: arranged in alphabetical order by datatype, then by name
 
     /**
      * Color to contrast with the background colors
@@ -91,7 +102,8 @@ public class StepperApp extends JFrame {
      * to add custom values to its selection options.<br><br>
      *
      * All default thread selection options (except for the first two indices), when Integer.parseInt is called on them,
-     * must return a value on the interval [1, StepperAppFields.MAX_THREADS] without throwing an exception.
+     * must return a value on the interval [1, StepperAppFields.MAX_THREADS] without throwing an exception. The
+     * Integer values must be in ascending order. Note: There should never be duplicate values.
      */
     final private static String[] THREAD_SELECTION_OPTIONS = new String[] {"Select number of threads (default: 1)", "Custom...",
             "2", "4", "6", "8", "10", "12", "16", "20", "24", "32", "48", "64"};
@@ -170,9 +182,9 @@ public class StepperApp extends JFrame {
      * Allows the user to select number of threads in the operation.<br><br>
      *
      * User selects from one of THREAD_SELECTION_OPTIONS.<br>
-     * If the "Custom" option is chosen, Strings may be added. Any Strings, after calling the Integer.parseInt method on them,
-     * must evaluate to an integer on the interval [1, 999].<br>
-     * If a non-integer is selected, the value of the Selector should be changed to "1" just before processing.
+     * If the "Custom" option is chosen, Strings may be added. Any added Strings, after calling the Integer.parseInt method on them,
+     * must evaluate to an integer on the interval [1, StepperAppFields.MAX_THREADS].<br>
+     * If a non-integer is selected, the value of the Selector should be changed to "1" just before processing.<br>
      */
     private JComboBox<String> threadCountSelector;
 
@@ -184,9 +196,9 @@ public class StepperApp extends JFrame {
     private JLabel processingProgressText;
 
     /**
-     * Text giving the current stage of operations on the processing screen
+     * Text giving the current step of operations, i.e. "Loading input", on the processing screen
      */
-    private JLabel processingStageText;
+    private JLabel processingStepText;
 
 
     /**
@@ -235,8 +247,6 @@ public class StepperApp extends JFrame {
     private JTextField textInputBottom;
 
 
-    //ADDITIONAL FIELDS (IF NECESSARY)
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -247,10 +257,11 @@ public class StepperApp extends JFrame {
      * Creates a new StepperApp and initializes its fields
      */
     public StepperApp() {
-        //Configure field classes
+        //Configure non-GUI field class
         fields = new StepperAppFields();
 
         //Idiot check: all thread count choices in the default selection must be on the interval [1, MAX_THREADS]
+        int previousValue = 0;
         for(int i=2; i<THREAD_SELECTION_OPTIONS.length; i++) {
             try {
                 int currentValue = Integer.parseInt(THREAD_SELECTION_OPTIONS[i]);
@@ -258,6 +269,11 @@ public class StepperApp extends JFrame {
                     throw new AssertionError("All default thread selection options except for the first two must represent integers"
                     + " on the interval [1, " + StepperAppFields.MAX_THREADS + "]");
                 }
+                if(currentValue <= previousValue) {
+                    throw new AssertionError("Default thread options must be in strictly increasing order");
+                }
+
+                previousValue = currentValue;
             }
             catch(NumberFormatException e) {
                 throw new AssertionError("All default thread selection options except for the first two must represent integers");
@@ -280,38 +296,38 @@ public class StepperApp extends JFrame {
         setScreen("LOGIN");
 
         //Initialize the app window
-        setTitle("Java Project");
+        setTitle("Hello App");
         setSize(APP_DIMENSIONS);
         setFocusable(true);
         requestFocus();
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setVisible(true);
 
         //Run the garbage collector
         System.gc();
     }
 
+
     /**
-     * Adds `screen` to `pane` and assigns it the name `screenName`.<br><br>
-     * If `screenName` doesn't appear in the VALID_SCREEN_NAMES array, throws IllegalArgumentException.<br>
-     * If any arguments are null, throws IllegalArgumentException.<br>
+     * Adds `screen` to `pane` and assigns it the name `screenName`.<br>
+     * Throws IllegalArgumentException if `screenName` is not in the VALID_SCREEN_NAMES array.<br><br>
      *
      * This method is necessary to prevent silent errors if the screen names have typos.<br><br>
      *
      * Helper to the class constructor. Should only be called from the constructor.
      *
-     * @param pane Container to add the new screen to
-     * @param screen JPanel representing the screen to be added
+     * @param pane Container to add the new screen to. Cannot be null
+     * @param screen JPanel representing the screen to be added. Cannot be null
      * @param screenName name of the new screen
-     * @throws IllegalArgumentException if `screenName` is not in VALID_SCREEN_NAMES or any arguments are null
+     * @throws IllegalArgumentException if `screenName` is not in the VALID_SCREEN_NAMES array
      */
     private void addToLayout(Container pane, JPanel screen, String screenName) {
         //Null check
         if(pane==null || screen==null) {
-            throw new IllegalArgumentException("The input container and screen cannot be null");
+            throw new AssertionError("The input container and screen cannot be null");
         }
         if(screenName==null) {
-            throw new IllegalArgumentException("The screen name cannot be null");
+            throw new AssertionError("The screen name cannot be null");
         }
 
         //Look through VALID_SCREEN_NAMES. If a match is found, change the screen to `screenName`
@@ -331,7 +347,7 @@ public class StepperApp extends JFrame {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //UTILITIES
 
-    
+
     /**
      * Returns the current contents of the bottom text input
      * @return contents of `textInputBottom`
@@ -348,6 +364,7 @@ public class StepperApp extends JFrame {
      */
     public StepperAppFields fields() {
         return fields;
+        //This method is used!
     }
 
 
@@ -389,15 +406,6 @@ public class StepperApp extends JFrame {
 
 
     /**
-     * Returns the current contents of the top text input
-     * @return contents of `textInputTop`
-     */
-    public String topTextInputValue() {
-        return textInputTop.getText();
-    }
-
-
-    /**
      * Sets the processing progress text, which holds additional information about operations in progress, to `newText`.
      *
      * @param newText what to display on the progress text
@@ -407,25 +415,29 @@ public class StepperApp extends JFrame {
     }
 
     /**
-     * Sets the processing stage text, which holds general information about operations in progress, to `newText`.
+     * Sets the processing step text, which holds general information about operations in progress, to `newText`.<br><br>
+     *
+     * The processing steps include information such as "Loading input".
      *
      * @param newText what to display on the stage text
      */
-    public void setProcessingStageText(String newText) {
-        processingStageText.setText(newText);
+    public void setProcessingStepText(String newText) {
+        processingStepText.setText(newText);
     }
 
 
     /**
      * Sets the GUI to display the screen named `screenName`.<br>
-     * If `screenName` is null or not in VALID_SCREEN_NAMES, throws IllegalArgumentException.
+     * If `screenName` is not in VALID_SCREEN_NAMES, throws IllegalArgumentException.
      *
-     * @throws IllegalArgumentException if `screenName` is null or not in the VALID_SCREEN_NAMES array. Gives a descriptive error message
+     * @param screenName the screen name to set. Cannot be null
+     * @throws IllegalArgumentException if `screenName` is not in the VALID_SCREEN_NAMES array.
+     * Gives a descriptive error message
      */
     public void setScreen(String screenName) {
         //Null check
         if(screenName==null) {
-            throw new IllegalArgumentException("Screen name cannot be null");
+            throw new AssertionError("Screen name cannot be null");
         }
 
         //Check all the possible screen names
@@ -433,7 +445,6 @@ public class StepperApp extends JFrame {
             //If a valid screen name is found, set the screen
             if(VALID_SCREEN_NAMES[i].equals(screenName)) {
                 screens.show(contentPane, screenName);
-                System.gc();
                 return;
             }
         }
@@ -442,9 +453,23 @@ public class StepperApp extends JFrame {
     }
 
 
-    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /**
+     * Returns the current contents of the top text input
+     * @return contents of `textInputTop`
+     */
+    public String topTextInputValue() {
+        return textInputTop.getText();
+    }
+
+
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //CARD LAYOUT SETUP METHODS: Should be private and called only in the constructor.
+
 
 
     /**
@@ -557,7 +582,7 @@ public class StepperApp extends JFrame {
 
 
         //"Incorrect password" text
-        textHeader = new JLabel("Incorrect password");
+        textHeader = new JLabel("Invalid password");
         textHeader.setFont(MEDIUM_FONT);
         constraints.gridx=0;
         constraints.gridy=0;
@@ -611,7 +636,7 @@ public class StepperApp extends JFrame {
 
 
         //Screen header
-        textHeader = new JLabel("Stepper App v2.4.1");
+        textHeader = new JLabel("Stepper App v2.4.2");
         textHeader.setFont(LARGE_FONT);
         constraints.gridx=0;
         constraints.gridy=0;
@@ -847,21 +872,23 @@ public class StepperApp extends JFrame {
         enterButton.setFont(MEDIUM_FONT);
         enterButton.setPreferredSize(new Dimension((int) (APP_DIMENSIONS.width/8.0), (int) (APP_DIMENSIONS.height/16.0)));
         enterButton.addActionListener(event -> {
+            //LOAD THE DISPATCHER WITH ALL NECESSARY VALUES FROM THE GUI
 
-            //Set input preferences. Text loading is done in the Boss thread
+            //Set input preferences. Text loading and error checking is done in the Boss thread
 
             String filename = StepperAppFields.TEXT_LOAD_SIGNAL; //Signal to the Boss thread (made by a Dispatcher) to take input from a text input
             //Set filename to load from if selected by the user. Invalid filenames are handled by the Boss thread
             if(inputModeSelector.getSelectedItem().equals(INPUT_SELECTION_OPTIONS[2])) {
                 filename = textInputTop.getText();
             }
+            //Any errors in loading are caught in the Boss and handled by the Dispatcher
 
             //Load key
             //Check the key if it's empty and decryption is selected
-            if(textInputBottom.getText().length()<=0 && operationModeSelector.getSelectedItem().equals(OPERATION_SELECTION_OPTIONS[2])) {
+            if(textInputBottom.getText().isEmpty() && operationModeSelector.getSelectedItem().equals(OPERATION_SELECTION_OPTIONS[2])) {
                 //Ask user to continue and take the user's choice
                 int choice = JOptionPane.showConfirmDialog(this,
-                        "The decryption key will be randomized. Continue?", "Input warning", JOptionPane.YES_NO_OPTION);
+                        "The decryption key will be randomized. Continue?", "Warning", JOptionPane.YES_NO_OPTION);
 
                 //If user doesn't want to continue, stop
                 if(choice != JOptionPane.YES_OPTION) {
@@ -910,7 +937,7 @@ public class StepperApp extends JFrame {
             }
 
             //Reset the progress
-            setProcessingStageText("Loading input...");
+            setProcessingStepText("Loading input...");
             setProcessingProgressText("");
 
             //Make the main thread
@@ -951,36 +978,63 @@ public class StepperApp extends JFrame {
                 }
 
                 //Empty input: display error and stop looking
-                if(customInput.equals("")) {
+                if(customInput.isEmpty()) {
                     threadCountSelector.setSelectedItem(THREAD_SELECTION_OPTIONS[0]);
                     JOptionPane.showMessageDialog(this, "The input cannot be empty",
-                            "Invalid input", JOptionPane.ERROR_MESSAGE);
+                            StepperAppFields.MESSAGE_DIALOG_TITLE, JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
                 //Take input. If not a valid integer, error message
                 try {
-                    int newCount = Integer.parseInt(customInput);
-                    fields.setThreadCount(newCount);
+                    int newThreadCount = (int)Float.parseFloat(customInput);
 
-                    //For some reason the setThreadCount method allows 0 as an acceptable input
-                    if(Integer.parseInt(customInput)==0) {
+                    //Stop any inputs out of range
+                    if(newThreadCount<=0 || newThreadCount>StepperAppFields.MAX_THREADS) {
                         throw new NumberFormatException();
                     }
 
-                    //Add the new value to the box
-                    threadCountSelector.insertItemAt(String.valueOf(newCount), 1);
-                    threadCountSelector.setSelectedItem(String.valueOf(newCount));
+
+                    //Set to 1 (the default, at index 0) if the user wants 1 thread
+                    if(newThreadCount==1) {
+                        threadCountSelector.setSelectedIndex(0);
+                        return;
+                    }
+
+                    //Try to find the new value in the box after the first two entries, if it exists
+                    for(int i=2; i<threadCountSelector.getItemCount(); i++) {
+
+                        //If found, set the current selection to the value in the box
+                        if(Integer.parseInt(threadCountSelector.getItemAt(i)) == newThreadCount) {
+                            threadCountSelector.setSelectedItem(String.valueOf(newThreadCount));
+                            return;
+                        }
+
+                        //If the previous value is smaller than the new value, insert the new value
+                        else if(Integer.parseInt(threadCountSelector.getItemAt(i)) > newThreadCount) {
+
+                            threadCountSelector.insertItemAt(String.valueOf(newThreadCount), i);
+                            threadCountSelector.setSelectedItem(String.valueOf(newThreadCount));
+                            return;
+                        }
+                    }
+
+                    //Add the new value at the end of the box if it's bigger than all other values in the box
+                    threadCountSelector.insertItemAt(String.valueOf(newThreadCount), threadCountSelector.getItemCount());
+                    threadCountSelector.setSelectedItem(String.valueOf(newThreadCount));
+
                 }
                 //Do a popup for an invalid input
                 catch(NumberFormatException e) {
                     threadCountSelector.setSelectedItem(THREAD_SELECTION_OPTIONS[0]);
                     JOptionPane.showMessageDialog(this, "The input must be an integer between 1 and " + StepperAppFields.MAX_THREADS,
-                            "Invalid input", JOptionPane.ERROR_MESSAGE);
+                            StepperAppFields.MESSAGE_DIALOG_TITLE, JOptionPane.ERROR_MESSAGE);
                     return;
                 }
             }
 
+            //END OF CUSTOM THREAD COUNT
+            return;
         });
         constraints.gridx=1;
         constraints.gridy=3;
@@ -1010,12 +1064,12 @@ public class StepperApp extends JFrame {
         panel.setLayout(layout);
 
         //Loading text
-        processingStageText = new JLabel();
-        processingStageText.setBackground(ACCENT_COLOR);
-        processingStageText.setFont(MEDIUM_FONT);
+        processingStepText = new JLabel();
+        processingStepText.setBackground(ACCENT_COLOR);
+        processingStepText.setFont(MEDIUM_FONT);
         constraints.gridx=0;
         constraints.gridy=0;
-        panel.add(processingStageText, constraints);
+        panel.add(processingStepText, constraints);
 
         //Spacer
         JPanel textHeaderSpacer = new JPanel();
@@ -1026,7 +1080,7 @@ public class StepperApp extends JFrame {
         panel.add(textHeaderSpacer, constraints);
 
         //Progress text
-        processingProgressText = new JLabel("potato");
+        processingProgressText = new JLabel("");
         processingProgressText.setFont(MEDIUM_FONT);
         constraints.gridx=0;
         constraints.gridy=3;

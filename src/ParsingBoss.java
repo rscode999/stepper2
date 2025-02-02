@@ -10,7 +10,8 @@ import java.util.concurrent.ExecutionException;
 /**
  * Created by a ParsingDispatcher to process the Dispatcher's input.<br><br>
  *
- * Dispatchers and Workers share messages through the Boss's input error message field.<br>
+ * If a problem occurs during processing that must be displayed on the main App, an error message is placed
+ * into the `errorMessage` field and used by the Dispatcher.<br><br>
  *
  * All private helper methods must continuously check if the Boss is cancelled. If so, the method should return
  * the empty string, unless the specification states otherwise. Methods that run quickly and in O(1) time, i.e. where its runtime
@@ -36,10 +37,22 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
      */
     final private boolean encrypting;
 
+    /**
+     * Holds any error message that the Boss should display on the main App, via its Dispatcher.<br>
+     * If no errors occur, this field will be the empty string.<br><br>
+     *
+     * Cannot be null
+     */
+    String errorMessage;
 
     /**
-     * The absolute path to the input file. If `filepath` is the empty string, the Boss will take its input from
-     * its parent App's top text input.
+     * The absolute path to the input file.<br><br>
+     *
+     * -If equal to `StepperAppFields.TEXT_LOAD_SIGNAL`, the Boss will take its input from
+     * its parent App's top text field.<br>
+     * -If empty, the Boss will take input from `StepperAppFields.DEFAULT_INPUT_FILENAME`.<br><br>
+     *
+     * Cannot be null
      */
     final private String filepath;
 
@@ -50,11 +63,7 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
     final private byte punctMode;
 
 
-    /**
-     * Holds any input error messages that might occur during the input loading. Holds the empty string if there are no errors
-     */
-    private String inputErrorMessage = "";
-
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
     /**
@@ -77,8 +86,10 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
 
         this.app=app;
         this.encrypting=encrypting;
-        this.punctMode=punctMode;
         this.filepath=filepath;
+        this.punctMode=punctMode;
+
+        this.errorMessage = "";
     }
 
     /**
@@ -93,19 +104,6 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
 
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-    /**
-     * Returns the input error message. The value returned is the empty string if there are no errors.
-     * @return the input error message
-     */
-    public String inputErrorMessage() {
-        //Idiot check
-        if(inputErrorMessage == null) {
-            throw new AssertionError("Input error message cannot be null");
-        }
-        return inputErrorMessage;
-    }
 
 
     /**
@@ -130,6 +128,13 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
                 " punctuation=" + punctMode;
     }
 
+    /**
+     * Returns the error message field of the Boss. The error message is the empty string if there are no errors.
+     * @return the Boss' error message
+     */
+    public String errorMessage() {
+        return this.errorMessage;
+    }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -160,48 +165,55 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
         app.setScreen("PROCESSING");
 
 
-        //Load the input into the parent app's fields, depending on if loading from text or file
-        //Loading to the app's fields is done so that the text and key can be in the same place
+        /////////////////////////////////////////////////////
+        //TAKE THE INPUT
+
+
+        //Get the input, depending on if loading from text or file
         String rawText;
-        try {
-            if (filepath.equals(StepperAppFields.TEXT_LOAD_SIGNAL)) {
-                rawText = app.topTextInputValue();
-            }
-            else {
-                rawText = getTextFromFile(filepath);
-            }
+        //Load from the text inputs if the text load signal is given as a filepath
+        if (StepperAppFields.TEXT_LOAD_SIGNAL.equals(filepath)) {
+            rawText = app.topTextInputValue();
         }
-        //If something goes wrong, set the error message for the Dispatcher and return early
-        catch(FileNotFoundException e) {
-            inputErrorMessage = e.getMessage();
-            return null;
-        }
-        catch(Throwable t) {
-           inputErrorMessage = "Exception during text loading- " + t;
-           return null;
+        //Otherwise, load from file
+        else {
+            try {
+                rawText = getTextFromFile(filepath); //getTextFromFile gives a descriptive error message
+            }
+            //If file loading goes wrong, load the error message with the error message
+            catch(FileNotFoundException e) {
+                errorMessage = e.getMessage();
+                return null;
+            }
+            //If anything else goes wrong, stop
+            catch (Throwable t) {
+                System.err.println("Exception thrown in text loading- " + t.toString());
+                return null;
+            }
         }
 
 
-        //Set local copy of the input that were just put into the app's fields
+        //Convert the input into a StringBuilder for faster loading
         StringBuilder text = new StringBuilder(rawText);
 
-        //Remove text and key from the app to save memory
+        //Remove text to save memory
         rawText = null;
 
 
         System.gc();
-        app.setProcessingStageText((app.fields().threadCount()<=1) ?
+        app.setProcessingStepText((app.fields().threadCount()<=1) ?
                 "Formatting 1 thread, " + text.length() + " characters..." :
                 "Formatting " + app.fields().threadCount() + " threads, " + text.length() + " characters...");
 
+
         /////////////////////////////////////////////////////
         //REMOVE DIACRITICS USING ALL THREADS
+
 
         //Create text pieces
         String[] textPieces = setWorkerLoads(text.toString(),
         app.fields().threadCount(),
         StepperAppFields.BLOCK_LENGTH);
-
 
         //Create worker threads and assign them a workload
         workerThreads = new ParsingDiacriticsWorker[textPieces.length];
@@ -228,7 +240,7 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
             return null;
         }
         catch (Exception e) {
-            System.err.println("Exception during formatting- " + e);
+            System.err.println("Exception in Boss during diacritics removal- " + e);
             return null;
         }
 
@@ -241,10 +253,10 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
 
         /////////////////////////////////////////////////////
         //OPERATION
-        //Doesn't use a function to save memory, processing power, and the organizational scheme
+
 
         System.gc();
-        app.setProcessingStageText((app.fields().threadCount()<=1) ?
+        app.setProcessingStepText((app.fields().threadCount()<=1) ?
                 "Loading 1 thread, " + text.length() + " characters..." :
                 "Loading " + app.fields().threadCount() + " threads, " + text.length() + " characters...");
 
@@ -303,7 +315,7 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
             return null;
         }
         catch (Exception e) {
-            System.err.println("Error during execution- " + e);
+            System.err.println("Boss thread: Error during execution- " + e);
             return null;
         }
 
@@ -312,7 +324,7 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
         System.gc();
 
 
-        app.setProcessingStageText("Executing...");
+        app.setProcessingStepText("Executing...");
 
         //Load the output into the parent App (this is a thread-safe operation) in chunks
         final int LOAD_SIZE = 10000;
@@ -346,6 +358,7 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
 
         textPieces = null;
 
+
         //Load the key into the parent App (this is a thread-safe operation)
         app.setOutputKeyArea(arrToString(operationsKey), false);
 
@@ -367,9 +380,9 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
 
 
     /**
-     * Returns input, but converted to a String<br><br>
+     * Returns `input`, but converted to a String<br><br>
      *
-     * input should contain numerical values representing English letters. a=0, b=1, c=2... z=25<br>
+     * `input` should contain numerical values representing English letters. a=0, b=1, c=2... z=25<br>
      * The output should contain the characters represented by the numerical values in order.<br>
      *
      * Order: In order of increasing subarray index first, then by order of array index. input[0][1] should come
@@ -520,14 +533,25 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
     }
 
     /**
-     * Returns the value given by createKeyBlocks.<br><br>
+     * Returns a byte[][] array with `blocks` indices, each with `charsPerBlock` characters,
+     * containing the text from `input` as numerical values.<br><br>
      *
-     * FOR UNIT TESTING ONLY!
+     * -Numerical values: a=0, b=1, c=2... z=25. A=0, B=1, C=2... Z=25. Note: uppercase letters are the same as lowercase letters<br>
+     *
+     * -Before the input can be processed, removeDiacritics must be called on each character of the input.<br>
+     *
+     * -All non-letters (any character that is not an English ASCII letter after removeDiacritics is called) are to be ignored.<br>
+     *
+     * -If `input` contains less than `blocks`*`charsPerBlock` English ASCII letters, any character not filled by `input`
+     * becomes a random value on the interval [0,25]. If `input` contains more than `blocks`*`charsPerBlock` English ASCII letters,
+     * any character past index `blocks`*`charsPerBlock` in the input is ignored.<br><br>
+     *
+     * FOR UNIT TESTING ONLY!!!
      *
      * @param input the input text. Can't be null
      * @param blocks number of indices in the output array. Must be positive
      * @param charsPerBlock number of indices in each of the output's subarrays. Must be positive
-     * @return value from createKeyBlocks
+     * @return `blocks` by `charsPerBlock` byte[][] array loaded with text from `input`
      */
     public byte[][] createKeyBlocks_Testing(String input, int blocks, int charsPerBlock) {
         return createKeyBlocks(input, blocks, charsPerBlock);
@@ -539,8 +563,8 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
      * StepperFunctions.DEFAULT_INPUT_FILE.<br><br>
      *
      * The input filepath must end with the ".txt" extension.<br>
-     *
-     * If the input filepath does not end in ".txt" or the file could not be read, throws a FileNotFoundException.<br>
+     * If the input filepath is empty, does not end in ".txt", or the file could not be read,
+     * throws a FileNotFoundException.<br>
      *
      * @param filepath name of the input file. Can't be null
      * @return contents from the given input filename, or the empty string if the Boss is cancelled
@@ -565,15 +589,15 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
         StringBuilder output = new StringBuilder();
 
         //Check if the input file ends in .txt
-        if(inputFile.getName().length()<=3 || !inputFile.getName().substring((int) (inputFile.getName().length()-4)).equals(".txt")) {
+        if(inputFile.getName().length()<=3 || !inputFile.getName().endsWith(".txt")) {
             throw new FileNotFoundException("The input file must have a .txt extension");
         }
         else {
             //Read the file and load it into the fields
             try {
-
                 Scanner fileReader = new Scanner(inputFile);
 
+                //Load all the lines
                 while (fileReader.hasNextLine()) {
                     if(isCancelled()) {
                         return "";
@@ -583,14 +607,21 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
                     output.append("\n");
                 }
             }
-            //If error, throw an exception
+            //If error, create a nicer error message and throw an exception with it
             catch (FileNotFoundException e) {
-                String fileErrorMsg = "The input file \"" + inputFile.getName() + "\" does not exist\n";
-                if(filepath.isEmpty()) {
-                    fileErrorMsg += "in the folder containing the app";
+                String fileErrorMsg = "The input file \"";
+
+                fileErrorMsg += (inputFile.getName().length() < 20) ?
+                        inputFile.getName() :
+                        inputFile.getName().substring(0, 16) + "... .txt";
+
+                fileErrorMsg += "\" does not exist\n";
+
+                if(filepath.contains("\\") || filepath.contains("/")) {
+                    fileErrorMsg += "at the given absolute path";
                 }
                 else {
-                    fileErrorMsg += "at the given absolute path";
+                    fileErrorMsg += "in the folder containing the app";
                 }
 
                 throw new FileNotFoundException(fileErrorMsg);
@@ -642,14 +673,12 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
         }
 
         return charReplacement;
-
     }
 
-
     /**
-     * Returns the value that removeDiacritics returns.<br><br>
+     * Returns a lowercase version of the input without accent marks or letter variants.<br><br>
      *
-     * FOR UNIT TESTS ONLY!
+     * FOR UNIT TESTING ONLY!
      *
      * @param input letter to remove diacritics from
      * @return copy of input without diacritics
@@ -669,15 +698,13 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
      *
      * -Any unused threads should be assigned the empty string, not null. Empty strings may occur at the beginning of the output array.<br>
      *
-     * -Note: The final character of each output index (excluding the last index) should end in an alphabetic character.<br><br>
-     *
-     * The test cases may fail. If so, manually check if the thread loads are even in each failed test.
-     * An even distribution of work and a piece length being a multiple of `threads` are the most important aspects of the output.<br>
+     * -Note: The final character of each output index (excluding the last index) should end in an alphabetic character.
      *
      * @param text the text to split. Non-null
      * @param threads how many pieces `text` should be split into. If zero, or the Boss is cancelled, returns {""}. Cannot be negative
      * @param blockLength number of characters, or a multiple thereof, to put in each piece. Must be positive
-     * @return array of Strings. There are `threads` total Strings evenly split among the output's indices
+     * @return array of Strings. There are `threads` total Strings whose alphabetic characters are
+     * evenly split among the output's indices
      */
     private String[] setWorkerLoads(String text, int threads, int blockLength) {
 
@@ -703,7 +730,8 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
             }
         }
 
-        //CALCULATE NUMBER OF CHARACTERS PER THREAD
+
+        //CALCULATE NUMBER OF BLOCKS PER THREAD
 
         //Number of blocks equals the number of alphabetic characters divided by the block length
         //If there is a remainder, there is an extra block
@@ -711,22 +739,24 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
         if (alphaChars % blockLength != 0) nBlocks++;
         //Note: one block is a piece of length `blockLength` or shorter
 
-        //Create the number of blocks in each thread. Temporarily holds the number of characters
-        int[] charsPerPiece = new int[threads];
+        //Create the number of characters in each thread. Temporarily holds the number of blocks
+        int[] charsPerThread = new int[threads];
 
         //The minimum number of blocks per piece is the number of blocks divided by the number of threads
-        Arrays.fill(charsPerPiece, nBlocks / threads);
+        Arrays.fill(charsPerThread, nBlocks / threads);
         //The number of remaining blocks equals the remainder of the number of blocks divided by the number of threads
-        for (int i = charsPerPiece.length - 1; i >= charsPerPiece.length - nBlocks % threads; i--) {
-            charsPerPiece[i]++;
+        for (int i = charsPerThread.length - 1; i >= charsPerThread.length - nBlocks % threads; i--) {
+            charsPerThread[i]++;
         }
 
 
-        //Create another String array to hold the result and load it. Also properly calculate number of characters per thread
+        //CALCULATE NUMBER OF CHARACTERS PER THREAD
+
+        //Create a StringBuilder array to hold the result and load it. Also properly calculate number of characters per thread
         StringBuilder[] threadLoads = new StringBuilder[threads];
         for(int t=0; t<threadLoads.length; t++) {
             threadLoads[t] = new StringBuilder();
-            charsPerPiece[t] *= blockLength; //now, charsPerThread holds the number of characters per thread
+            charsPerThread[t] *= blockLength; //now, charsPerThread holds the number of characters per thread
 
             //Check if cancelled, abort if so
             if(isCancelled()) {
@@ -735,13 +765,15 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
         }
 
 
-        //Move through each thread and load it
+        //LOAD THE THREADS
+
+        //Move through each thread, except for the last one, and load it
         int currentThread = 0;
         int currentTextIndex = 0;
         while(currentThread < threadLoads.length) {
 
             //If there are no more characters to load, move to the next thread
-            if(charsPerPiece[currentThread] == 0) {
+            if(charsPerThread[currentThread] == 0) {
                 currentThread++;
             }
             //If not, load the character
@@ -750,7 +782,7 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
 
                 //Update number of alphabetic characters if a letter was loaded
                 if(text.charAt(currentTextIndex)>=97 && text.charAt(currentTextIndex)<=122) {
-                    charsPerPiece[currentThread]--;
+                    charsPerThread[currentThread]--;
                 }
 
                 //Move to the next index
@@ -768,7 +800,7 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
             }
         }
 
-        //Load any non-alphabetic character that was not loaded in the main loading loop
+        //Load any non-alphabetic character that was not yet loaded into the last thread
         while(currentTextIndex < text.length()) {
             threadLoads[threadLoads.length-1].append(text.charAt(currentTextIndex));
             currentTextIndex++;
@@ -795,12 +827,21 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
 
 
     /**
-     * Returns the value that setWorkerLoads returns.<br><br>
+     * FOR UNIT TESTING ONLY!<br><br>
+     *
+     * Returns an array containing `text` split evenly into `threads` pieces.
+     * The number of alphabetic characters of each piece must be a multiple of `blockLength`, except for the last piece.<br><br>
+     *
+     * -Alphabetic characters are lowercase English ASCII characters.<br>
+     *
+     * -All indices except for the last one should have `blockLength` alphabetic characters or a multiple thereof.<br>
+     *
+     * -Any unused threads should be assigned the empty string, not null. Empty strings may occur at the beginning of the output array.<br>
+     *
+     * -Note: The final character of each output index (excluding the last index) should end in an alphabetic character.<br><br>
      *
      * The test cases may fail. If so, manually check if the thread loads are even in each failed test.
-     * An even distribution of work and a piece length being a multiple of `threads` are the most important aspects of the output.<br><br>
-     *
-     * FOR UNIT TESTING ONLY!
+     * An even distribution of work and a piece length being a multiple of `threads` are the most important aspects of the output.
      *
      * @param text the text to split. Non-null
      * @param threads how many pieces `text` should be split into. If zero, or the Boss is cancelled, returns {""}. Cannot be negative

@@ -10,12 +10,16 @@ public class StepperAppFields {
     //CONSTANTS
 
     /**
-     * Number of blocks to use in processes. Must be positive. Highly recommended to be a prime number.
+     * Number of blocks to use in processes. Must be on the interval [1, 127].<br><br>
+     *
+     * Highly recommended to be a prime number.
      */
     final public static int BLOCK_COUNT = 5;
 
     /**
-     * Length of each block to use in processes. Must be positive. Highly recommended to be a prime number, or at least relatively prime with BLOCK_COUNT.
+     * Length of each block to use in processes. Must be on the interval [1, 127].<br><br>
+     *
+     * Highly recommended to be a prime number, or at least relatively prime with BLOCK_COUNT.
      */
     final public static int BLOCK_LENGTH = 22;
 
@@ -36,6 +40,13 @@ public class StepperAppFields {
      * Maximum number of threads that can be used for a process. Must be at least 1
      */
     final public static int MAX_THREADS = 999;
+
+
+    /**
+     * Standard title for any message dialog popup boxes. Most message dialogs should use this as a title.
+     * Cannot be null or the empty string
+     */
+    final public static String MESSAGE_DIALOG_TITLE = "Error";
 
 
     /**
@@ -101,19 +112,30 @@ public class StepperAppFields {
      * Helper to the class constructor
      */
     private void assertConstantInvars() {
-        if(BLOCK_COUNT<=0 || BLOCK_LENGTH<=0) throw new AssertionError("Block count and block length must be positive");
+        if(BLOCK_COUNT<=0 || BLOCK_COUNT>127)
+            throw new AssertionError("Block count must be on the interval [1, 127]");
+
+        if(BLOCK_LENGTH<=0 || BLOCK_LENGTH>127)
+            throw new AssertionError("Block length must be on the interval [1, 127]");
+
 
         if(DEFAULT_INPUT_FILENAME ==null
         || DEFAULT_INPUT_FILENAME.length()<4
-        || DEFAULT_INPUT_FILENAME.endsWith(".txt")==false) throw new AssertionError("Default input file must end in \".txt\"");
+        || DEFAULT_INPUT_FILENAME.endsWith(".txt")==false)
+            throw new AssertionError("Default input filename must end in \".txt\"");
 
         if(KEY_BLOCK_INCREMENTS==null
-        || KEY_BLOCK_INCREMENTS.length != BLOCK_COUNT) throw new AssertionError("The key block increment array's length must equal the block count");
+        || KEY_BLOCK_INCREMENTS.length != BLOCK_COUNT)
+            throw new AssertionError("The key block increment array's length (" + KEY_BLOCK_INCREMENTS.length +
+                    ") must equal the block count (" + BLOCK_COUNT + ")");
         for(byte b : KEY_BLOCK_INCREMENTS) {
             if(b < 0) throw new AssertionError("All indices of the key block increment array must be positive");
         }
 
         if(MAX_THREADS <= 0) throw new AssertionError("Max thread count must be positive");
+
+        if(MESSAGE_DIALOG_TITLE==null || MESSAGE_DIALOG_TITLE.equals(""))
+            throw new AssertionError("Message dialog title cannot be null or the empty string");
 
         if(TEXT_LOAD_SIGNAL==null
         || TEXT_LOAD_SIGNAL.equals("")) throw new AssertionError("Text load signal cannot be null or the empty string");
