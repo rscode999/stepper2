@@ -19,11 +19,6 @@ import java.util.concurrent.ExecutionException;
  */
 public class ParsingBoss extends SwingWorker<Void,Void> {
 
-    /**
-     * The worker threads that this Boss employs. The array's length may vary depending on the number of threads used
-     */
-    private SwingWorker<String,Void>[] workerThreads;
-
 
     /**
      * The parent app that the Boss works for.
@@ -61,6 +56,12 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
      * Allowed values: 0 if including punctuation, 1 if excluding spaces, 2 if alphabetic characters only
      */
     final private byte punctMode;
+
+
+    /**
+     * The worker threads that this Boss employs. The array's length may vary depending on the number of threads used
+     */
+    private SwingWorker<String,Void>[] workerThreads;
 
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -516,7 +517,6 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
             //Add random character to the formatted key
             formattedKey.append((char) currentRandChar);
         }
-//        System.out.println(formattedKey);
 
         //At this point, the formatted key should contain blocks*charsPerBlock characters.
         byte[][] output = new byte[blocks][charsPerBlock];
@@ -694,7 +694,9 @@ public class ParsingBoss extends SwingWorker<Void,Void> {
      *
      * -Alphabetic characters are lowercase English ASCII characters.<br>
      *
-     * -All indices except for the last one should have `blockLength` alphabetic characters or a multiple thereof.<br>
+     * -All indices except for the last one should have `blockLength` alphabetic characters or a multiple thereof.
+     * Non-alphabetic characters should NOT be ignored, even though the index divisions are based on the
+     * alphabetic characters.<br>
      *
      * -Any unused threads should be assigned the empty string, not null. Empty strings may occur at the beginning of the output array.<br>
      *

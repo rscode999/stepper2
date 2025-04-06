@@ -14,14 +14,14 @@ public class StepperAppFields {
      *
      * Highly recommended to be a prime number.
      */
-    final public static int BLOCK_COUNT = 5;
+    final public static byte BLOCK_COUNT = 5;
 
     /**
      * Length of each block to use in processes. Must be on the interval [1, 127].<br><br>
      *
      * Highly recommended to be a prime number, or at least relatively prime with BLOCK_COUNT.
      */
-    final public static int BLOCK_LENGTH = 22;
+    final public static byte BLOCK_LENGTH = 22;
 
 
     /**

@@ -221,17 +221,17 @@ public class ParsingOperationsWorker extends SwingWorker<String,Void> {
 
 
     /**
-     * Returns the decrypted version of text using the given key.
-     * Operations start after `startBlock` blocks have been decrypted.<br><br>
+     * Returns the decrypted version of `text` using the given key.
+     * Operations start after `startingSegment` segments have been decrypted.<br><br>
      *
      * Algorithm first implemented on February 26-29, 2024. Enhanced encryption finished on July 18, 2024. By Chris P Bacon
      *
      * @param text text to decrypt. Must contain all lowercase English ASCII characters. Can't be null
      * @param key key to decrypt with. Can't be null. All indices must be on [0,25]
-     * @param startBlock index to start decrypting from. Must be non-negative
+     * @param startingSegment index to start decrypting from. Must be non-negative
      * @return decrypted version of text
      */
-    private String decrypt(String text, byte[][] key, int startBlock) {
+    private String decrypt(String text, byte[][] key, int startingSegment) {
         //Enforce preconditions
 
         //Check that both inputs are not null
@@ -261,20 +261,20 @@ public class ParsingOperationsWorker extends SwingWorker<String,Void> {
         }
 
         //Check start index is non-negative
-        if(startBlock < 0) {
-            throw new AssertionError("Starting block number must be non-negative");
+        if(startingSegment < 0) {
+            throw new AssertionError("Starting segment number must be non-negative");
         }
 
 
         //////////////////////////
 
         //Configure positions
-        byte[] keyBlockBasePositions=initializeKeyBlockPositions(startBlock + text.length()/StepperAppFields.BLOCK_LENGTH);
+        byte[] keyBlockBasePositions=initializeKeyBlockPositions(startingSegment + text.length()/StepperAppFields.BLOCK_LENGTH);
 
         StringBuilder output = new StringBuilder(text.length());
 
         int currentChar=0;
-        int currentBlock = (startBlock + text.length()/StepperAppFields.BLOCK_LENGTH);
+        int currentBlock = (startingSegment + text.length()/StepperAppFields.BLOCK_LENGTH);
 
         byte[] keyBlockReadPositions=new byte[StepperAppFields.BLOCK_COUNT];
         System.arraycopy(keyBlockBasePositions, 0, keyBlockReadPositions, 0, keyBlockReadPositions.length);
@@ -314,7 +314,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,Void> {
         }
 
 
-        for(int b = text.length()-(text.length() % StepperAppFields.BLOCK_LENGTH)-1; b>=0; b-= StepperAppFields.BLOCK_LENGTH) {
+        for(int seg = text.length()-(text.length() % StepperAppFields.BLOCK_LENGTH)-1; seg>=0; seg-= StepperAppFields.BLOCK_LENGTH) {
             if(isCancelled()) {
                 return "";
             }
@@ -335,7 +335,7 @@ public class ParsingOperationsWorker extends SwingWorker<String,Void> {
 
             System.arraycopy(keyBlockBasePositions, 0, keyBlockReadPositions, 0, keyBlockReadPositions.length);
 
-            for(int t = b; t > b - StepperAppFields.BLOCK_LENGTH; t--) {
+            for(int t = seg; t > seg - StepperAppFields.BLOCK_LENGTH; t--) {
 
                 for(int d=0; d<keyBlockReadPositions.length; d++) {
                     keyBlockReadPositions[d]--;
@@ -437,19 +437,20 @@ public class ParsingOperationsWorker extends SwingWorker<String,Void> {
 
 
     /**
-     * Returns the encrypted version of text, using inputKey as the key. Encryption starts after `startBlocks` blocks. <br><br>
+     * Returns the encrypted version of `text`, using `inputKey` as the key.
+     * Encryption starts after `startingSegment` segments. <br><br>
      *
-     * The result should be as if the entire text was encrypted, then only the substring starting after `startBlocks` is
+     * The result should be as if the entire text was encrypted, then only the substring starting after `startingSegment` is
      * in the final result.<br><br>
      *
      * Algorithm first implemented on February 26-29, 2024. Enhanced encryption finished on July 18, 2024. By Chris P Bacon
      *
      * @param text text to encrypt. Must contain all lowercase English ASCII characters. Can't be null
      * @param key key to encrypt with. Can't be null. All indices must be on [0,25]
-     * @param startBlocks index to start encrypting from. Must be non-negative
+     * @param startingSegment index to start encrypting from. Must be non-negative
      * @return encrypted version of text
      */
-    private String encrypt(String text, byte[][] key, int startBlocks) {
+    private String encrypt(String text, byte[][] key, int startingSegment) {
         //Enforce preconditions
 
         //Check that both inputs are not null
@@ -479,31 +480,31 @@ public class ParsingOperationsWorker extends SwingWorker<String,Void> {
         }
 
         //Check start index is non-negative
-        if(startBlocks < 0) {
-            throw new AssertionError("Starting block number must be non-negative");
+        if(startingSegment < 0) {
+            throw new AssertionError("Starting segment number must be non-negative");
         }
 
 
         //////////////////////////
         //Start the process
 
-        byte[] keyBlockBasePositions = initializeKeyBlockPositions(startBlocks);
+        byte[] keyBlockBasePositions = initializeKeyBlockPositions(startingSegment);
         byte[] keyBlockReadPositions = new byte[StepperAppFields.BLOCK_COUNT];
         System.arraycopy(keyBlockBasePositions, 0, keyBlockReadPositions, 0, keyBlockReadPositions.length);
 
 
         StringBuilder output = new StringBuilder(text.length());
         int currentChar=0;
-        int blocksEncrypted = startBlocks;
+        int blocksEncrypted = startingSegment;
 
-        for(int b = 0; b <= (text.length() - StepperAppFields.BLOCK_LENGTH); b += StepperAppFields.BLOCK_LENGTH) {
+        for(int seg = 0; seg <= (text.length() - StepperAppFields.BLOCK_LENGTH); seg += StepperAppFields.BLOCK_LENGTH) {
             if(isCancelled()) {
                 return "";
             }
 
             System.arraycopy(keyBlockBasePositions, 0, keyBlockReadPositions, 0, keyBlockReadPositions.length);
 
-            for(int t = b; t<(b + StepperAppFields.BLOCK_LENGTH); t++) {
+            for(int t = seg; t<(seg + StepperAppFields.BLOCK_LENGTH); t++) {
 
                 currentChar=(int)text.charAt(t) - 97;
 
