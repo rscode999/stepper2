@@ -296,7 +296,7 @@ public class StepperApp extends JFrame {
         setScreen("LOGIN");
 
         //Initialize the app window
-        setTitle("Hello App");
+        setTitle("Hello App (DEPRECATED)");
         setSize(APP_DIMENSIONS);
         setFocusable(true);
         requestFocus();
@@ -535,6 +535,23 @@ public class StepperApp extends JFrame {
         constraints.gridy=4;
         panel.add(pwVerticalSpacer, constraints);
 
+        //Warning text
+        JTextArea warning = new JTextArea("WARNING: This application is deprecated since 2025/06/09");
+        warning.setBackground(LOGIN_BACKGROUND_COLOR);
+        warning.setFont(MEDIUM_FONT);
+        constraints.gridx=0;
+        constraints.gridy=5;
+        panel.add(warning, constraints);
+
+        //Spacer
+        JPanel warningVerticalSpacer = new JPanel();
+        warningVerticalSpacer.setBackground(LOGIN_BACKGROUND_COLOR);
+        warningVerticalSpacer.setPreferredSize(new Dimension((int) (APP_DIMENSIONS.width/2.0), (int) (APP_DIMENSIONS.height/20.0)));
+        constraints.anchor=FIRST_LINE_START;
+        constraints.gridx=0;
+        constraints.gridy=6;
+        panel.add(warningVerticalSpacer, constraints);
+
         //Enter button
         enterButton = new JButton("Enter");
         enterButton.setBackground(ACCENT_COLOR);
@@ -553,7 +570,7 @@ public class StepperApp extends JFrame {
         });
         constraints.anchor=FIRST_LINE_START;
         constraints.gridx=0;
-        constraints.gridy=5;
+        constraints.gridy=7;
         panel.add(enterButton, constraints);
 
         return panel;
@@ -642,13 +659,12 @@ public class StepperApp extends JFrame {
         constraints.gridy=0;
         panel.add(textHeader, constraints);
 
-        //Spacer
-        JPanel textHeaderSpacer = new JPanel();
-        textHeaderSpacer.setBackground(INPUT_BACKGROUND_COLOR);
-        textHeaderSpacer.setPreferredSize(new Dimension((int) (APP_DIMENSIONS.width/2.0), (int) (APP_DIMENSIONS.height/8.0)));
+        //Warning
+        JLabel warning = new JLabel("NO LONGER MAINTAINED SINCE JUNE 9 2025");
+        warning.setFont(MEDIUM_FONT);
         constraints.gridx=0;
         constraints.gridy=1;
-        panel.add(textHeaderSpacer, constraints);
+        panel.add(warning, constraints);
 
         //Top input label
         textInputTopLabel = new JLabel("Plaintext");

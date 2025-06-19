@@ -3,6 +3,8 @@ This is a project of rules and regulations! Read this document thoroughly before
 As a friendly reminder, failure to follow the rules means I will track you down and [REDACTED].
 
 
+THIS PROJECT IS DEPRECATED SINCE JUNE 9, 2025. NO MORE MODIFICATIONS EXCEPT FOR COMMENTS ARE TO BE MADE.
+
 
 Table of contents:
 -Docstring Rules
